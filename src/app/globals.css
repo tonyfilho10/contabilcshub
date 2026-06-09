@@ -165,4 +165,9 @@
   .mention {
     @apply inline-flex items-center rounded-full bg-primary/10 text-primary font-semibold px-1.5 py-0.5 text-[0.85em] cursor-default select-none;
   }
+
+  /* @você — destaque especial para o próprio usuário */
+  .mention[data-me="true"] {
+    @apply bg-primary/20 text-primary ring-1 ring-primary/40;
+  }
 }

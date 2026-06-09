@@ -24,6 +24,7 @@ interface PopEditorProps {
   onChange?: (content: string) => void
   onMentionsChange?: (ids: string[]) => void
   placeholder?: string
+  currentUserId?: string
 }
 
 function extractMentionIds(editor: ReturnType<typeof useEditor>): string[] {
@@ -35,7 +36,7 @@ function extractMentionIds(editor: ReturnType<typeof useEditor>): string[] {
   return [...new Set(ids)]
 }
 
-export function PopEditor({ content, onChange, onMentionsChange, placeholder }: PopEditorProps) {
+export function PopEditor({ content, onChange, onMentionsChange, placeholder, currentUserId }: PopEditorProps) {
   const [imageDialogOpen, setImageDialogOpen] = useState(false)
   const [linkDialogOpen, setLinkDialogOpen] = useState(false)
   const [imageUrl, setImageUrl] = useState("")
@@ -76,10 +77,16 @@ export function PopEditor({ content, onChange, onMentionsChange, placeholder }: 
         HTMLAttributes: { class: "mention" },
         suggestion,
         renderHTML({ options, node }) {
+          const isMe = currentUserId && node.attrs.id === currentUserId
+          const label = isMe ? "você" : (node.attrs.label ?? node.attrs.id)
           return [
             "span",
-            { ...options.HTMLAttributes, "data-id": node.attrs.id },
-            `@${node.attrs.label ?? node.attrs.id}`,
+            {
+              ...options.HTMLAttributes,
+              "data-id": node.attrs.id,
+              ...(isMe ? { "data-me": "true" } : {}),
+            },
+            `@${label}`,
           ]
         },
       }),

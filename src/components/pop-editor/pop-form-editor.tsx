@@ -177,6 +177,7 @@ export function PopFormEditor({ modo, id }: PopFormEditorProps) {
                 onChange={setConteudo}
                 onMentionsChange={setMencionadosIds}
                 placeholder="Descreva o passo a passo do procedimento…"
+                currentUserId={currentUser?.id}
               />
             </div>
           </div>
