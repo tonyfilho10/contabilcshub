@@ -4,34 +4,40 @@ import { prisma } from "@/lib/prisma"
 export async function GET() {
   try {
     const pops = await prisma.pop.findMany({
-      include: { tags: { include: { tag: true } }, autor: true },
+      include: { tags: { include: { tag: true } } },
       orderBy: { atualizadoEm: "desc" },
     })
     return NextResponse.json(pops)
   } catch (error) {
-    return NextResponse.json({ error: "Erro ao buscar POPs" }, { status: 500 })
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error("[GET /api/pops]", msg)
+    return NextResponse.json({ error: "Erro ao buscar POPs", detail: msg }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { titulo, descricao, conteudo, status, versao, tags } = body
+    const { titulo, descricao, conteudo, status, versao } = body
+
+    if (!titulo?.trim()) {
+      return NextResponse.json({ error: "Título obrigatório" }, { status: 400 })
+    }
 
     const pop = await prisma.pop.create({
       data: {
-        titulo,
-        descricao,
-        conteudo,
+        titulo: titulo.trim(),
+        descricao: descricao ?? null,
+        conteudo: conteudo ?? null,
         status: status ?? "RASCUNHO",
         versao: versao ?? "1.0",
-        autorId: "system",
       },
     })
 
     return NextResponse.json(pop, { status: 201 })
   } catch (error) {
-    console.error(error)
-    return NextResponse.json({ error: "Erro ao criar POP" }, { status: 500 })
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error("[POST /api/pops]", msg)
+    return NextResponse.json({ error: "Erro ao criar POP", detail: msg }, { status: 500 })
   }
 }

@@ -5,9 +5,11 @@ import { usePathname } from "next/navigation"
 import {
   LayoutDashboard,
   BookOpen,
-  FileText,
   Tags,
   MessageSquare,
+  NotebookText,
+  Folder,
+  Tag,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -26,7 +28,7 @@ export function ModuleTabs({ tabs }: ModuleTabsProps) {
   const pathname = usePathname()
 
   return (
-    <nav className="flex items-end gap-0 border-b border-border bg-background px-4 md:px-6 overflow-x-auto">
+    <nav className="flex items-end gap-0 border-b border-border bg-background px-4 md:px-6 overflow-x-auto shrink-0">
       {tabs.map((tab) => {
         const active = tab.exact
           ? pathname === tab.url
@@ -51,10 +53,17 @@ export function ModuleTabs({ tabs }: ModuleTabsProps) {
   )
 }
 
-/* Tabs do módulo Contábil */
+/* Tabs do módulo POPs */
 export const CONTABIL_TABS: TabItem[] = [
-  { label: "Dashboard", url: "/dashboard",   icon: LayoutDashboard, exact: true },
-  { label: "POPs",      url: "/pops",        icon: BookOpen },
-  { label: "Tags",      url: "/tags",        icon: Tags },
-  { label: "Comentários", url: "/comentarios", icon: MessageSquare },
+  { label: "Dashboard",    url: "/dashboard",    icon: LayoutDashboard, exact: true },
+  { label: "POPs",         url: "/pops",         icon: BookOpen },
+  { label: "Tags",         url: "/tags",         icon: Tags },
+  { label: "Comentários",  url: "/comentarios",  icon: MessageSquare },
+]
+
+/* Tabs do módulo Anotações */
+export const ANOTACOES_TABS: TabItem[] = [
+  { label: "Minhas Notas", url: "/anotacoes",                  icon: NotebookText, exact: true },
+  { label: "Pastas",       url: "/anotacoes/pastas",           icon: Folder },
+  { label: "Tags",         url: "/anotacoes/tags",             icon: Tag },
 ]

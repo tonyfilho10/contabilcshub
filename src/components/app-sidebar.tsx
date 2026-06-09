@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Building2, BookOpen } from "lucide-react"
+import { Building2, BookOpen, NotebookText } from "lucide-react"
 
 import {
   Sidebar,
@@ -29,7 +29,12 @@ const modulos = [
     icon: BookOpen,
     match: ["/dashboard", "/pops", "/tags", "/comentarios"],
   },
-  // Novos módulos entram aqui
+  {
+    id: "anotacoes",
+    label: "Anotações",
+    icon: NotebookText,
+    match: ["/anotacoes"],
+  },
 ]
 
 export function AppSidebar() {

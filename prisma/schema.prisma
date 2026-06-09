@@ -23,18 +23,18 @@ enum TagType {
 }
 
 model Pop {
-  id          String    @id @default(cuid())
-  titulo      String
-  descricao   String?
-  conteudo    Json?
-  status      PopStatus @default(RASCUNHO)
-  versao      String    @default("1.0")
-  criadoEm   DateTime  @default(now())
-  atualizadoEm DateTime @updatedAt
-  publicadoEm DateTime?
+  id           String    @id @default(cuid())
+  titulo       String
+  descricao    String?
+  conteudo     Json?
+  status       PopStatus @default(RASCUNHO)
+  versao       String    @default("1.0")
+  criadoEm    DateTime  @default(now())
+  atualizadoEm DateTime  @updatedAt
+  publicadoEm  DateTime?
 
-  autorId     String
-  autor       Profile   @relation("PopAutor", fields: [autorId], references: [id])
+  autorId String?
+  autor   Profile? @relation("PopAutor", fields: [autorId], references: [id])
 
   tags        PopTag[]
   comentarios Comentario[]
@@ -47,7 +47,7 @@ model Pop {
 model Tag {
   id    String  @id @default(cuid())
   nome  String  @unique
-  cor   String  @default("#6366f1")
+  cor   String  @default("#f97316")
   tipo  TagType @default(CUSTOM)
   icone String?
 
@@ -71,25 +71,25 @@ model Comentario {
   texto     String
   criadoEm DateTime @default(now())
   popId     String
-  autorId   String
+  autorId   String?
   parentId  String?
 
-  pop     Pop        @relation(fields: [popId], references: [id], onDelete: Cascade)
-  autor   Profile    @relation(fields: [autorId], references: [id])
-  parent  Comentario?  @relation("Respostas", fields: [parentId], references: [id])
+  pop       Pop          @relation(fields: [popId], references: [id], onDelete: Cascade)
+  autor     Profile?     @relation(fields: [autorId], references: [id])
+  parent    Comentario?  @relation("Respostas", fields: [parentId], references: [id])
   respostas Comentario[] @relation("Respostas")
 
   @@map("comentarios")
 }
 
 model Anexo {
-  id         String   @id @default(cuid())
-  nome       String
-  url        String
-  tipo       String
-  tamanho    Int?
-  criadoEm  DateTime @default(now())
-  popId      String
+  id        String   @id @default(cuid())
+  nome      String
+  url       String
+  tipo      String
+  tamanho   Int?
+  criadoEm DateTime @default(now())
+  popId     String
 
   pop Pop @relation(fields: [popId], references: [id], onDelete: Cascade)
 
@@ -102,13 +102,63 @@ model HistoricoVersao {
   conteudo  Json?
   descricao String?
   criadoEm DateTime @default(now())
-  autorId   String
+  autorId   String?
   popId     String
 
-  pop   Pop     @relation(fields: [popId], references: [id], onDelete: Cascade)
-  autor Profile @relation(fields: [autorId], references: [id])
+  pop   Pop      @relation(fields: [popId], references: [id], onDelete: Cascade)
+  autor Profile? @relation(fields: [autorId], references: [id])
 
   @@map("historico_versoes")
+}
+
+// ── Módulo de Anotações ────────────────────────────────────
+
+model PastaAnotacao {
+  id        String   @id @default(cuid())
+  nome      String
+  cor       String   @default("#f97316")
+  icone     String?
+  criadoEm DateTime @default(now())
+  usuarioId String
+
+  anotacoes Anotacao[]
+
+  @@map("pastas_anotacoes")
+}
+
+model TagAnotacao {
+  id   String @id @default(cuid())
+  nome String
+  cor  String @default("#6366f1")
+
+  anotacoes AnotacaoTag[]
+
+  @@map("tags_anotacoes")
+}
+
+model Anotacao {
+  id        String   @id @default(cuid())
+  titulo    String
+  conteudo  Json?
+  criadoEm DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+  usuarioId String
+  pastaId   String?
+
+  pasta PastaAnotacao? @relation(fields: [pastaId], references: [id])
+  tags  AnotacaoTag[]
+
+  @@map("anotacoes")
+}
+
+model AnotacaoTag {
+  anotacaoId String
+  tagId      String
+  anotacao   Anotacao    @relation(fields: [anotacaoId], references: [id], onDelete: Cascade)
+  tag        TagAnotacao @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([anotacaoId, tagId])
+  @@map("anotacao_tags")
 }
 
 model Profile {
@@ -119,9 +169,9 @@ model Profile {
   cargo     String?
   criadoEm DateTime @default(now())
 
-  popsAutor    Pop[]            @relation("PopAutor")
-  comentarios  Comentario[]
-  historico    HistoricoVersao[]
+  popsAutor   Pop[]             @relation("PopAutor")
+  comentarios Comentario[]
+  historico   HistoricoVersao[]
 
   @@map("profiles")
 }
