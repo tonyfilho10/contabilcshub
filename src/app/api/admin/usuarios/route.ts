@@ -45,8 +45,9 @@ export async function POST(req: NextRequest) {
   if (!senha || senha.length < 6)
     return jsonRes({ error: "Senha inicial deve ter pelo menos 6 caracteres" }, 400)
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://lpcetxaaqypxvcwprhff.supabase.co"
   const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY!
+  if (!serviceKey) return jsonRes({ error: "Configuração do servidor ausente (service key)" }, 500)
 
   // 1. Cria usuário no Supabase Auth via fetch direto
   const authRes = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {

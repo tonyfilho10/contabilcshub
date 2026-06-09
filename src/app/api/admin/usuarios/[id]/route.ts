@@ -10,8 +10,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   // Atualizar senha via fetch direto à API admin do Supabase
   if (senha) {
     if (senha.length < 6) return jsonRes({ error: "Senha deve ter pelo menos 6 caracteres" }, 400)
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://lpcetxaaqypxvcwprhff.supabase.co"
     const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY!
+    if (!serviceKey) return jsonRes({ error: "Configuração do servidor ausente (service key)" }, 500)
     const res = await fetch(`${supabaseUrl}/auth/v1/admin/users/${id}`, {
       method: "PUT",
       headers: {
@@ -23,7 +24,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     })
     if (!res.ok) {
       const err = await res.json().catch(() => ({}))
-      return jsonRes({ error: err.message ?? "Erro ao atualizar senha" }, 500)
+      return jsonRes({ error: err.message ?? `Erro ao atualizar senha (HTTP ${res.status})` }, 500)
     }
   }
 
@@ -54,7 +55,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://lpcetxaaqypxvcwprhff.supabase.co"
   const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
   // Delete no auth via fetch direto
