@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Eye, EyeOff, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -55,12 +55,16 @@ export function UsuarioForm({ open, onOpenChange, inicial, onSave }: UsuarioForm
 
   const isEdicao = !!inicial?.id
 
-  const handleOpenChange = (v: boolean) => {
-    if (v) {
+  // Sincroniza form sempre que o dialog abre ou o usuário editado muda
+  useEffect(() => {
+    if (open) {
       setForm(inicial ?? EMPTY)
       setErro("")
       setShowSenha(false)
     }
+  }, [open, inicial])
+
+  const handleOpenChange = (v: boolean) => {
     onOpenChange(v)
   }
 
