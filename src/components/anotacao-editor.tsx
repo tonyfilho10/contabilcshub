@@ -43,15 +43,13 @@ export function AnotacaoEditor({ modo, id }: AnotacaoEditorProps) {
   const [saving, setSaving] = useState(false)
   const [carregando, setCarregando] = useState(modo === "editar")
 
-  // Carrega pastas e tags disponíveis
+  // Carrega pastas disponíveis (sem filtro para carregar imediatamente)
   useEffect(() => {
-    if (currentUser?.id) {
-      fetch(`/api/anotacoes/pastas?usuarioId=${currentUser.id}`)
-        .then((r) => r.json())
-        .then((d) => Array.isArray(d) ? setPastas(d) : [])
-        .catch(() => {})
-    }
-  }, [currentUser?.id])
+    fetch(`/api/anotacoes/pastas`)
+      .then((r) => r.json())
+      .then((d) => Array.isArray(d) ? setPastas(d) : [])
+      .catch(() => {})
+  }, [])
 
   // Se editar, carrega a anotação
   useEffect(() => {
@@ -196,7 +194,11 @@ export function AnotacaoEditor({ modo, id }: AnotacaoEditorProps) {
                   <Label>Pasta</Label>
                   <Select value={pastaId} onValueChange={(v) => setPastaId(v ?? "")}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Nenhuma pasta" />
+                      <SelectValue placeholder="Nenhuma pasta">
+                        {pastaId
+                          ? (pastas.find((p) => p.id === pastaId)?.nome ?? "Carregando…")
+                          : "Nenhuma pasta"}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="">Nenhuma pasta</SelectItem>
