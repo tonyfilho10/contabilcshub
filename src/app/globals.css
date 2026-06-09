@@ -3,6 +3,9 @@
 @import "shadcn/tailwind.css";
 @plugin "@tailwindcss/typography";
 
+/* Fonte Changa */
+@import url("https://fonts.googleapis.com/css2?family=Changa:wght@300;400;500;600;700;800&display=swap");
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -49,73 +52,102 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* ─── Modo Claro ─────────────────────────────────────────── */
+/* primary  = azul escuro   #0f2d4a  → oklch(0.245 0.072 237) */
+/* accent   = laranja claro #ff8c42  → oklch(0.72 0.165 48)    */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
+  --background: oklch(0.98 0.004 237);
+  --foreground: oklch(0.16 0.04 237);
+
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
+  --card-foreground: oklch(0.16 0.04 237);
+
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.16 0.04 237);
+
+  /* Azul escuro como cor primária */
+  --primary: oklch(0.245 0.072 237);
+  --primary-foreground: oklch(0.98 0.004 237);
+
+  --secondary: oklch(0.93 0.012 237);
+  --secondary-foreground: oklch(0.245 0.072 237);
+
+  --muted: oklch(0.94 0.01 237);
+  --muted-foreground: oklch(0.48 0.04 237);
+
+  /* Laranja claro como accent */
+  --accent: oklch(0.72 0.165 48);
+  --accent-foreground: oklch(0.98 0 0);
+
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --border: oklch(0.88 0.018 237);
+  --input: oklch(0.88 0.018 237);
+  --ring: oklch(0.5 0.09 237);
+
+  --chart-1: oklch(0.245 0.072 237);
+  --chart-2: oklch(0.72 0.165 48);
+  --chart-3: oklch(0.42 0.1 237);
+  --chart-4: oklch(0.62 0.12 200);
+  --chart-5: oklch(0.55 0.14 30);
+
+  --radius: 0.5rem;
+
+  /* Sidebar: azul escuro sólido */
+  --sidebar: oklch(0.245 0.072 237);
+  --sidebar-foreground: oklch(0.92 0.01 237);
+  --sidebar-primary: oklch(0.72 0.165 48);
+  --sidebar-primary-foreground: oklch(0.98 0 0);
+  --sidebar-accent: oklch(0.32 0.08 237);
+  --sidebar-accent-foreground: oklch(0.95 0.008 237);
+  --sidebar-border: oklch(0.32 0.06 237);
+  --sidebar-ring: oklch(0.72 0.165 48);
 }
 
+/* ─── Modo Escuro ────────────────────────────────────────── */
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
+  --background: oklch(0.13 0.025 237);
+  --foreground: oklch(0.93 0.01 237);
+
+  --card: oklch(0.18 0.03 237);
+  --card-foreground: oklch(0.93 0.01 237);
+
+  --popover: oklch(0.18 0.03 237);
+  --popover-foreground: oklch(0.93 0.01 237);
+
+  /* Azul mais vibrante no dark */
+  --primary: oklch(0.55 0.13 237);
+  --primary-foreground: oklch(0.98 0 0);
+
+  --secondary: oklch(0.22 0.04 237);
+  --secondary-foreground: oklch(0.93 0.01 237);
+
+  --muted: oklch(0.22 0.04 237);
+  --muted-foreground: oklch(0.62 0.05 237);
+
+  /* Laranja mais quente no dark */
+  --accent: oklch(0.75 0.17 48);
+  --accent-foreground: oklch(0.1 0 0);
+
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.55 0.13 237);
+
+  --chart-1: oklch(0.55 0.13 237);
+  --chart-2: oklch(0.75 0.17 48);
+  --chart-3: oklch(0.42 0.09 237);
+  --chart-4: oklch(0.65 0.12 200);
+  --chart-5: oklch(0.58 0.14 30);
+
+  /* Sidebar dark: azul muito escuro */
+  --sidebar: oklch(0.16 0.04 237);
+  --sidebar-foreground: oklch(0.9 0.01 237);
+  --sidebar-primary: oklch(0.75 0.17 48);
+  --sidebar-primary-foreground: oklch(0.1 0 0);
+  --sidebar-accent: oklch(0.22 0.05 237);
+  --sidebar-accent-foreground: oklch(0.93 0.01 237);
+  --sidebar-border: oklch(1 0 0 / 8%);
+  --sidebar-ring: oklch(0.75 0.17 48);
 }
 
 @layer base {
@@ -124,8 +156,13 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-family: "Changa", "Segoe UI", Arial, sans-serif;
   }
   html {
-    @apply font-sans;
+    font-family: "Changa", "Segoe UI", Arial, sans-serif;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Changa", "Segoe UI", Arial, sans-serif;
+    font-weight: 700;
   }
 }
