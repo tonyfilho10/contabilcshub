@@ -2,7 +2,17 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Calculator, BookOpen, NotebookText, ShieldCheck, LogOut } from "lucide-react"
+import {
+  Calculator,
+  BookOpen,
+  NotebookText,
+  ShieldCheck,
+  LogOut,
+  UserCircle,
+  Sun,
+  Moon,
+} from "lucide-react"
+import { useTheme } from "next-themes"
 
 import {
   Sidebar,
@@ -10,58 +20,23 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarSeparator,
 } from "@/components/ui/sidebar"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useCurrentUser, podeVerAdmin, clearCurrentUserCache } from "@/lib/use-current-user"
 import { createClient } from "@/lib/supabase/client"
-
-const MODULOS_BASE = [
-  {
-    id: "pops",
-    label: "POPs",
-    icon: BookOpen,
-    href: "/pops",
-    match: ["/dashboard", "/pops", "/tags", "/comentarios"],
-  },
-  {
-    id: "anotacoes",
-    label: "Anotações",
-    icon: NotebookText,
-    href: "/anotacoes",
-    match: ["/anotacoes"],
-  },
-]
-
-const MODULO_ADMIN = {
-  id: "admin",
-  label: "Administração",
-  icon: ShieldCheck,
-  href: "/admin/usuarios",
-  match: ["/admin"],
-}
 
 export function AppSidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const currentUser = useCurrentUser()
-
-  const modulos = [
-    ...MODULOS_BASE,
-    ...(podeVerAdmin(currentUser?.cargo) ? [MODULO_ADMIN] : []),
-  ]
+  const { theme, setTheme } = useTheme()
 
   async function handleLogout() {
     clearCurrentUserCache()
@@ -74,6 +49,50 @@ export function AppSidebar() {
   const initials = currentUser?.nome
     ? currentUser.nome.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase()
     : "US"
+
+  const isAdmin = podeVerAdmin(currentUser?.cargo)
+
+  const modulosItens = [
+    {
+      id: "pops",
+      label: "POPs",
+      icon: BookOpen,
+      href: "/pops",
+      match: ["/dashboard", "/pops", "/tags", "/comentarios"],
+    },
+    {
+      id: "anotacoes",
+      label: "Anotações",
+      icon: NotebookText,
+      href: "/anotacoes",
+      match: ["/anotacoes"],
+    },
+  ]
+
+  const pessoalItens = [
+    {
+      id: "perfil",
+      label: "Meu Perfil",
+      icon: UserCircle,
+      href: "/perfil",
+      match: ["/perfil"],
+    },
+    ...(isAdmin
+      ? [
+          {
+            id: "admin",
+            label: "Administração",
+            icon: ShieldCheck,
+            href: "/admin/usuarios",
+            match: ["/admin"],
+          },
+        ]
+      : []),
+  ]
+
+  function isActive(match: string[]) {
+    return match.some((m) => pathname === m || pathname.startsWith(m + "/"))
+  }
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -95,40 +114,45 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
 
-      {/* Módulos */}
       <SidebarContent className="py-2">
+
+        {/* Módulos */}
         <SidebarGroup className="px-1">
+          <SidebarGroupLabel>Módulos</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {modulos.map((mod) => {
-                const active = mod.match.some(
-                  (m) => pathname === m || pathname.startsWith(m + "/")
-                )
-                return (
-                  <SidebarMenuItem key={mod.id}>
-                    <SidebarMenuButton
-                      render={<Link href={mod.href} />}
-                      isActive={active}
-                      tooltip={mod.label}
-                      className="font-semibold"
-                    >
-                      <mod.icon className="h-4 w-4 shrink-0" />
-                      <span>{mod.label}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
+              {modulosItens.map((item) => (
+                <SidebarMenuItem key={item.id}>
+                  <SidebarMenuButton
+                    render={<Link href={item.href} />}
+                    isActive={isActive(item.match)}
+                    tooltip={item.label}
+                    className="font-semibold"
+                  >
+                    <item.icon className="h-4 w-4 shrink-0" />
+                    <span>{item.label}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-      </SidebarContent>
 
-      {/* Rodapé: perfil + tema */}
-      <SidebarFooter className="border-t border-sidebar-border p-2 gap-1">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <DropdownMenu>
-              <DropdownMenuTrigger render={<SidebarMenuButton tooltip="Meu Perfil" className="h-10 w-full" />}>
+        <SidebarSeparator />
+
+        {/* Pessoal */}
+        <SidebarGroup className="px-1">
+          <SidebarGroupLabel>Pessoal</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {/* Avatar + nome como item clicável */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  render={<Link href="/perfil" />}
+                  isActive={isActive(["/perfil"])}
+                  tooltip="Meu Perfil"
+                  className="h-10"
+                >
                   <Avatar className="h-6 w-6 shrink-0">
                     <AvatarImage src={currentUser?.avatar ?? ""} />
                     <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-[10px] font-bold">
@@ -137,56 +161,72 @@ export function AppSidebar() {
                   </Avatar>
                   <div className="flex flex-col leading-none min-w-0">
                     <span className="text-sm font-medium truncate text-sidebar-foreground">
-                      {currentUser?.nome ?? "Usuário"}
+                      {currentUser?.nome ?? "Meu Perfil"}
                     </span>
                     <span className="text-[11px] text-sidebar-foreground/60 truncate">
                       {currentUser?.cargo
                         ? currentUser.cargo.charAt(0) + currentUser.cargo.slice(1).toLowerCase()
-                        : "Meu perfil"}
+                        : "perfil"}
                     </span>
                   </div>
-              </DropdownMenuTrigger>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
-              <DropdownMenuContent side="top" align="start" className="w-52">
-                <DropdownMenuItem render={<Link href="/perfil" />}>
-                  <Avatar className="h-5 w-5 mr-2">
-                    <AvatarFallback className="bg-primary/10 text-primary text-[9px] font-bold">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  Meu perfil
-                </DropdownMenuItem>
+              {isAdmin && (
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    render={<Link href="/admin/usuarios" />}
+                    isActive={isActive(["/admin"])}
+                    tooltip="Administração"
+                    className="font-semibold"
+                  >
+                    <ShieldCheck className="h-4 w-4 shrink-0" />
+                    <span>Administração</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
-                <DropdownMenuSeparator />
+        <SidebarSeparator />
 
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
-                  onSelect={handleLogout}
+        {/* Configurações */}
+        <SidebarGroup className="px-1">
+          <SidebarGroupLabel>Configurações</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip={theme === "dark" ? "Modo claro" : "Modo escuro"}
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                 >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sair
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </SidebarMenuItem>
-        </SidebarMenu>
+                  {theme === "dark" ? (
+                    <Sun className="h-4 w-4 shrink-0" />
+                  ) : (
+                    <Moon className="h-4 w-4 shrink-0" />
+                  )}
+                  <span>{theme === "dark" ? "Modo claro" : "Modo escuro"}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
-        {/* Botão Sair visível */}
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              tooltip="Sair"
-              className="text-destructive hover:text-destructive hover:bg-destructive/10"
-              onClick={handleLogout}
-            >
-              <LogOut className="h-4 w-4 shrink-0" />
-              <span>Sair</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip="Sair"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={handleLogout}
+                >
+                  <LogOut className="h-4 w-4 shrink-0" />
+                  <span>Sair</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
-        <ThemeToggle />
-      </SidebarFooter>
+      </SidebarContent>
+
+      <SidebarFooter />
 
       <SidebarRail />
     </Sidebar>
