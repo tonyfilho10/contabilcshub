@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from "react"
 import { toast } from "sonner"
-import { Camera, Save, User, Eye, EyeOff, KeyRound, Loader2 } from "lucide-react"
+import { Camera, Save, User, Eye, EyeOff, KeyRound, Loader2, LogOut } from "lucide-react"
 
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
@@ -12,11 +12,21 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Separator } from "@/components/ui/separator"
 import { cn } from "@/lib/utils"
+import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { useCurrentUser } from "@/lib/use-current-user"
+import { useCurrentUser, clearCurrentUserCache } from "@/lib/use-current-user"
 
 export default function PerfilPage() {
   const currentUser = useCurrentUser()
+  const router = useRouter()
+
+  async function handleLogout() {
+    clearCurrentUserCache()
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push("/login")
+    router.refresh()
+  }
 
   // Dados pessoais
   const [nome, setNome] = useState("")
@@ -321,6 +331,19 @@ export default function PerfilPage() {
           </Card>
 
         </div>
+
+        {/* Sair */}
+        <div className="flex justify-end pt-2 pb-6">
+          <Button
+            variant="outline"
+            className="text-destructive border-destructive/40 hover:bg-destructive/10 hover:text-destructive"
+            onClick={handleLogout}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Sair da conta
+          </Button>
+        </div>
+
       </main>
     </div>
   )

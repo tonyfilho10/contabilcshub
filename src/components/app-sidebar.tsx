@@ -1,14 +1,12 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import {
   Calculator,
   BookOpen,
   NotebookText,
   ShieldCheck,
-  LogOut,
-  UserCircle,
   Sun,
   Moon,
 } from "lucide-react"
@@ -29,22 +27,12 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useCurrentUser, podeVerAdmin, clearCurrentUserCache } from "@/lib/use-current-user"
-import { createClient } from "@/lib/supabase/client"
+import { useCurrentUser, podeVerAdmin } from "@/lib/use-current-user"
 
 export function AppSidebar() {
   const pathname = usePathname()
-  const router = useRouter()
   const currentUser = useCurrentUser()
   const { theme, setTheme } = useTheme()
-
-  async function handleLogout() {
-    clearCurrentUserCache()
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push("/login")
-    router.refresh()
-  }
 
   const initials = currentUser?.nome
     ? currentUser.nome.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase()
@@ -203,16 +191,6 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  tooltip="Sair"
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={handleLogout}
-                >
-                  <LogOut className="h-4 w-4 shrink-0" />
-                  <span>Sair</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
