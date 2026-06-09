@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server"
 import { jsonRes } from "@/lib/api-helpers"
-import { supabaseAdmin } from "@/lib/supabase-admin"
+import { createClient } from "@/lib/supabase/server"
 import { criarNotificacoesMencao } from "@/lib/notificacoes"
 
 export async function GET(req: NextRequest) {
@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   const usuarioId = searchParams.get("usuarioId")
   const busca     = searchParams.get("busca") ?? ""
   const pastaId   = searchParams.get("pastaId")
-  const sb = supabaseAdmin()
+  const sb = await createClient()
   let q = sb.from("anotacoes")
     .select("*, pasta:pastas_anotacoes(*), tags:anotacao_tags(tag:tags_anotacoes(*))")
     .order("atualizadoEm", { ascending: false })
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
   if (!titulo?.trim() || !usuarioId)
     return jsonRes({ error: "título e usuarioId são obrigatórios" }, 400)
 
-  const sb = supabaseAdmin()
+  const sb = await createClient()
   const now = new Date().toISOString()
   const id = crypto.randomUUID()
   const { data, error } = await sb
@@ -41,18 +41,13 @@ export async function POST(req: NextRequest) {
 
   if (error) return jsonRes({ error: error.message }, 500)
 
-  // Inserir tags
   if (tagIds?.length) {
-    await sb.from("anotacao_tags").insert(
-      tagIds.map((tagId: string) => ({ anotacaoId: id, tagId }))
-    )
+    await sb.from("anotacao_tags").insert(tagIds.map((tagId: string) => ({ anotacaoId: id, tagId })))
   }
 
-  // Notificar usuários mencionados
   if (mencionadosIds?.length) {
     await criarNotificacoesMencao({
-      mencionadosIds,
-      autorId: usuarioId,
+      mencionadosIds, autorId: usuarioId,
       tipo: "mencao_anotacao",
       titulo: `Você foi mencionado em uma anotação`,
       mensagem: `Na anotação "${titulo.trim()}"`,

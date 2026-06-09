@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
 import { jsonRes } from "@/lib/api-helpers"
-import { supabaseAdmin } from "@/lib/supabase-admin"
 import { createClient } from "@/lib/supabase/server"
 
 export async function POST(req: NextRequest) {
@@ -12,7 +11,7 @@ export async function POST(req: NextRequest) {
   if (!endpoint || !keys?.p256dh || !keys?.auth)
     return jsonRes({ error: "Dados de subscription inválidos" }, 400)
 
-  const { error } = await supabaseAdmin()
+  const { error } = await supabase
     .from("push_subscriptions")
     .upsert(
       { usuarioId: user.id, endpoint, p256dh: keys.p256dh, auth: keys.auth },
@@ -29,7 +28,7 @@ export async function DELETE(req: NextRequest) {
   if (!user) return jsonRes({ error: "Não autenticado" }, 401)
 
   const { endpoint } = await req.json()
-  await supabaseAdmin()
+  await supabase
     .from("push_subscriptions")
     .delete()
     .eq("usuarioId", user.id)
