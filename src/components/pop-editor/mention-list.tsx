@@ -9,6 +9,7 @@ export interface UsuarioSugestao {
   nome: string
   email: string
   avatar?: string | null
+  label?: string
 }
 
 interface MentionListProps {
