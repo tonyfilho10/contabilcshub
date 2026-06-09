@@ -171,9 +171,7 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
 
-        <div className="group-data-[collapsible=icon]:hidden">
-          <ThemeToggle />
-        </div>
+        <ThemeToggle />
       </SidebarFooter>
 
       <SidebarRail />
