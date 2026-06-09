@@ -42,7 +42,7 @@ export const MentionList = forwardRef<MentionListHandle, MentionListProps>(
           return true
         }
         if (event.key === "Enter") {
-          if (items[selectedIndex]) command({ id: items[selectedIndex].id, label: items[selectedIndex].nome })
+          if (items[selectedIndex]) command({ ...items[selectedIndex], label: items[selectedIndex].nome })
           return true
         }
         return false
@@ -63,7 +63,7 @@ export const MentionList = forwardRef<MentionListHandle, MentionListProps>(
           <button
             key={item.id}
             type="button"
-            onClick={() => command({ id: item.id, label: item.nome })}
+            onClick={() => command({ ...item, label: item.nome })}
             className={cn(
               "flex items-center gap-2 w-full px-3 py-2 text-sm text-left transition-colors",
               i === selectedIndex
