@@ -1,18 +1,40 @@
 import { NextRequest } from "next/server"
 import { jsonRes } from "@/lib/api-helpers"
 import { supabaseAdmin } from "@/lib/supabase-admin"
+import { createClient } from "@/lib/supabase/server"
+
+async function queryUsuarios(busca: string, cargo: string | null) {
+  // Tenta com service role primeiro
+  try {
+    const sb = supabaseAdmin()
+    let q = sb.from("profiles").select("*").order("criadoEm", { ascending: false })
+    if (cargo) q = q.eq("cargo", cargo)
+    if (busca) q = q.or(`nome.ilike.%${busca}%,email.ilike.%${busca}%`)
+    const { data, error } = await q
+    if (!error) return data ?? []
+  } catch {}
+
+  // Fallback: usa sessão autenticada do usuário (requer policy RLS)
+  const supabase = await createClient()
+  let q2 = supabase.from("profiles").select("*").order("criadoEm", { ascending: false })
+  if (cargo) q2 = q2.eq("cargo", cargo)
+  if (busca) q2 = q2.or(`nome.ilike.%${busca}%,email.ilike.%${busca}%`)
+  const { data, error } = await q2
+  if (error) throw new Error(error.message)
+  return data ?? []
+}
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const busca = searchParams.get("busca") ?? ""
   const cargo = searchParams.get("cargo")
-  const sb = supabaseAdmin()
-  let q = sb.from("profiles").select("*").order("criadoEm", { ascending: false })
-  if (cargo) q = q.eq("cargo", cargo)
-  if (busca) q = q.or(`nome.ilike.%${busca}%,email.ilike.%${busca}%`)
-  const { data, error } = await q
-  if (error) return jsonRes({ error: error.message }, 500)
-  return jsonRes(data ?? [])
+
+  try {
+    const data = await queryUsuarios(busca, cargo)
+    return jsonRes(data)
+  } catch (e) {
+    return jsonRes({ error: String(e) }, 500)
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -56,7 +78,6 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) {
-    // Rollback: remove o auth user criado
     await sb.auth.admin.deleteUser(userId)
     if (error.code === "23505") return jsonRes({ error: "E-mail já cadastrado" }, 409)
     return jsonRes({ error: error.message }, 500)
