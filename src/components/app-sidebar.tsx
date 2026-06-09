@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Building2, Calculator } from "lucide-react"
+import { Building2, BookOpen } from "lucide-react"
 
 import {
   Sidebar,
@@ -24,10 +24,9 @@ import { cn } from "@/lib/utils"
 /* Módulos principais — cada um corresponde a uma seção do sistema */
 const modulos = [
   {
-    id: "contabil",
-    label: "Contábil",
-    icon: Calculator,
-    /* qualquer rota que pertence a este módulo */
+    id: "pops",
+    label: "POPs",
+    icon: BookOpen,
     match: ["/dashboard", "/pops", "/tags", "/comentarios"],
   },
   // Novos módulos entram aqui
