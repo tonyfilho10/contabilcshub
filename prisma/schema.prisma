@@ -1,0 +1,127 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PopStatus {
+  RASCUNHO
+  EM_REVISAO
+  APROVADO
+  PUBLICADO
+  ARQUIVADO
+}
+
+enum TagType {
+  PROCESSO
+  AREA
+  PRIORIDADE
+  STATUS
+  CUSTOM
+}
+
+model Pop {
+  id          String    @id @default(cuid())
+  titulo      String
+  descricao   String?
+  conteudo    Json?
+  status      PopStatus @default(RASCUNHO)
+  versao      String    @default("1.0")
+  criadoEm   DateTime  @default(now())
+  atualizadoEm DateTime @updatedAt
+  publicadoEm DateTime?
+
+  autorId     String
+  autor       Profile   @relation("PopAutor", fields: [autorId], references: [id])
+
+  tags        PopTag[]
+  comentarios Comentario[]
+  anexos      Anexo[]
+  historico   HistoricoVersao[]
+
+  @@map("pops")
+}
+
+model Tag {
+  id    String  @id @default(cuid())
+  nome  String  @unique
+  cor   String  @default("#6366f1")
+  tipo  TagType @default(CUSTOM)
+  icone String?
+
+  pops PopTag[]
+
+  @@map("tags")
+}
+
+model PopTag {
+  popId String
+  tagId String
+  pop   Pop    @relation(fields: [popId], references: [id], onDelete: Cascade)
+  tag   Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([popId, tagId])
+  @@map("pop_tags")
+}
+
+model Comentario {
+  id        String   @id @default(cuid())
+  texto     String
+  criadoEm DateTime @default(now())
+  popId     String
+  autorId   String
+  parentId  String?
+
+  pop     Pop        @relation(fields: [popId], references: [id], onDelete: Cascade)
+  autor   Profile    @relation(fields: [autorId], references: [id])
+  parent  Comentario?  @relation("Respostas", fields: [parentId], references: [id])
+  respostas Comentario[] @relation("Respostas")
+
+  @@map("comentarios")
+}
+
+model Anexo {
+  id         String   @id @default(cuid())
+  nome       String
+  url        String
+  tipo       String
+  tamanho    Int?
+  criadoEm  DateTime @default(now())
+  popId      String
+
+  pop Pop @relation(fields: [popId], references: [id], onDelete: Cascade)
+
+  @@map("anexos")
+}
+
+model HistoricoVersao {
+  id        String   @id @default(cuid())
+  versao    String
+  conteudo  Json?
+  descricao String?
+  criadoEm DateTime @default(now())
+  autorId   String
+  popId     String
+
+  pop   Pop     @relation(fields: [popId], references: [id], onDelete: Cascade)
+  autor Profile @relation(fields: [autorId], references: [id])
+
+  @@map("historico_versoes")
+}
+
+model Profile {
+  id        String   @id
+  nome      String
+  email     String   @unique
+  avatar    String?
+  cargo     String?
+  criadoEm DateTime @default(now())
+
+  popsAutor    Pop[]            @relation("PopAutor")
+  comentarios  Comentario[]
+  historico    HistoricoVersao[]
+
+  @@map("profiles")
+}
