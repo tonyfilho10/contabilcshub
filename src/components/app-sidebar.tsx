@@ -109,12 +109,7 @@ export function AppSidebar() {
           </SidebarMenuItem>
 
           <SidebarMenuItem>
-            <div className={cn("flex items-center gap-2 px-2 py-1", collapsed && "justify-center")}>
-              <ThemeToggle />
-              {!collapsed && (
-                <span className="text-xs text-sidebar-foreground/60">Tema</span>
-              )}
-            </div>
+            <ThemeToggle />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
