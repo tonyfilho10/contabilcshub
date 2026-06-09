@@ -45,25 +45,33 @@ export async function POST(req: NextRequest) {
   if (!senha || senha.length < 6)
     return jsonRes({ error: "Senha inicial deve ter pelo menos 6 caracteres" }, 400)
 
-  const sb = supabaseAdmin()
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-  // 1. Cria usuário no Supabase Auth
-  const { data: authData, error: authError } = await sb.auth.admin.createUser({
-    email,
-    password: senha,
-    email_confirm: true,
+  // 1. Cria usuário no Supabase Auth via fetch direto
+  const authRes = await fetch(`${supabaseUrl}/auth/v1/admin/users`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": serviceKey,
+      "Authorization": `Bearer ${serviceKey}`,
+    },
+    body: JSON.stringify({ email, password: senha, email_confirm: true }),
   })
 
-  if (authError) {
-    if (authError.message.toLowerCase().includes("already")) {
-      return jsonRes({ error: "Já existe um usuário com esse e-mail" }, 409)
-    }
-    return jsonRes({ error: authError.message }, 500)
+  if (!authRes.ok) {
+    const err = await authRes.json().catch(() => ({}))
+    const msg = err.message ?? err.msg ?? "Erro ao criar usuário"
+    if (msg.toLowerCase().includes("already")) return jsonRes({ error: "Já existe um usuário com esse e-mail" }, 409)
+    return jsonRes({ error: msg }, 500)
   }
 
-  const userId = authData.user.id
+  const authData = await authRes.json()
+
+  const userId = authData.id ?? authData.user?.id
 
   // 2. Cria o perfil
+  const sb = await createClient()
   const { data, error } = await sb
     .from("profiles")
     .insert({
@@ -78,7 +86,11 @@ export async function POST(req: NextRequest) {
     .single()
 
   if (error) {
-    await sb.auth.admin.deleteUser(userId)
+    // Rollback: remove auth user via fetch direto
+    await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
+      method: "DELETE",
+      headers: { "apikey": serviceKey, "Authorization": `Bearer ${serviceKey}` },
+    }).catch(() => {})
     if (error.code === "23505") return jsonRes({ error: "E-mail já cadastrado" }, 409)
     return jsonRes({ error: error.message }, 500)
   }

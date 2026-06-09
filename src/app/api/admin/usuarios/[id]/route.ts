@@ -7,14 +7,23 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params
   const { nome, email, cargo, ativo, avatar, senha } = await req.json()
 
-  // Atualizar senha via auth.admin (precisa service role)
+  // Atualizar senha via fetch direto à API admin do Supabase
   if (senha) {
     if (senha.length < 6) return jsonRes({ error: "Senha deve ter pelo menos 6 caracteres" }, 400)
-    try {
-      const { error: authErr } = await supabaseAdmin().auth.admin.updateUserById(id, { password: senha })
-      if (authErr) return jsonRes({ error: authErr.message }, 500)
-    } catch (e) {
-      return jsonRes({ error: `Erro ao atualizar senha: ${e}` }, 500)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY!
+    const res = await fetch(`${supabaseUrl}/auth/v1/admin/users/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": serviceKey,
+        "Authorization": `Bearer ${serviceKey}`,
+      },
+      body: JSON.stringify({ password: senha }),
+    })
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}))
+      return jsonRes({ error: err.message ?? "Erro ao atualizar senha" }, 500)
     }
   }
 
@@ -45,10 +54,15 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  // Delete no auth (precisa de service role)
-  try {
-    await supabaseAdmin().auth.admin.deleteUser(id)
-  } catch {}
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY!
+
+  // Delete no auth via fetch direto
+  await fetch(`${supabaseUrl}/auth/v1/admin/users/${id}`, {
+    method: "DELETE",
+    headers: { "apikey": serviceKey, "Authorization": `Bearer ${serviceKey}` },
+  }).catch(() => {})
+
   // Delete no profile
   const sb = await createClient()
   const { error } = await sb.from("profiles").delete().eq("id", id)
