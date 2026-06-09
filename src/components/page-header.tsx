@@ -8,6 +8,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
+import { NotificationBell } from "@/components/notification-bell"
 
 interface PageHeaderProps {
   title: string
@@ -42,7 +43,11 @@ export function PageHeader({ title, breadcrumbs, children }: PageHeaderProps) {
             )}
         </BreadcrumbList>
       </Breadcrumb>
-      {children && <div className="ml-auto flex items-center gap-2">{children}</div>}
+
+      <div className="ml-auto flex items-center gap-2">
+        <NotificationBell />
+        {children}
+      </div>
     </header>
   )
 }

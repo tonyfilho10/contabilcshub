@@ -1,43 +1,55 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+import { NextRequest } from "next/server"
+import { jsonRes } from "@/lib/api-helpers"
+import { supabaseAdmin } from "@/lib/supabase-admin"
+import { criarNotificacoesMencao } from "@/lib/notificacoes"
 
 export async function GET() {
-  try {
-    const pops = await prisma.pop.findMany({
-      include: { tags: { include: { tag: true } } },
-      orderBy: { atualizadoEm: "desc" },
-    })
-    return NextResponse.json(pops)
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error)
-    console.error("[GET /api/pops]", msg)
-    return NextResponse.json({ error: "Erro ao buscar POPs", detail: msg }, { status: 500 })
-  }
+  const { data, error } = await supabaseAdmin()
+    .from("pops")
+    .select("*, tags:pop_tags(tag:tags(*))")
+    .order("atualizadoEm", { ascending: false })
+  if (error) return jsonRes({ error: error.message }, 500)
+  return jsonRes(data ?? [])
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json()
-    const { titulo, descricao, conteudo, status, versao } = body
+export async function POST(req: NextRequest) {
+  const { titulo, descricao, conteudo, status, versao, mencionadosIds, autorId, tagIds } = await req.json()
+  if (!titulo?.trim()) return jsonRes({ error: "Título obrigatório" }, 400)
 
-    if (!titulo?.trim()) {
-      return NextResponse.json({ error: "Título obrigatório" }, { status: 400 })
-    }
-
-    const pop = await prisma.pop.create({
-      data: {
-        titulo: titulo.trim(),
-        descricao: descricao ?? null,
-        conteudo: conteudo ?? null,
-        status: status ?? "RASCUNHO",
-        versao: versao ?? "1.0",
-      },
+  const sb = supabaseAdmin()
+  const now = new Date().toISOString()
+  const id = crypto.randomUUID()
+  const { data, error } = await sb
+    .from("pops")
+    .insert({
+      id, titulo: titulo.trim(), descricao: descricao ?? null,
+      conteudo: conteudo ?? null, status: status ?? "RASCUNHO",
+      versao: versao ?? "1.0", mencionadosIds: mencionadosIds ?? [],
+      autorId: autorId ?? null,
+      criadoEm: now, atualizadoEm: now,
     })
+    .select().single()
 
-    return NextResponse.json(pop, { status: 201 })
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error)
-    console.error("[POST /api/pops]", msg)
-    return NextResponse.json({ error: "Erro ao criar POP", detail: msg }, { status: 500 })
+  if (error) return jsonRes({ error: error.message }, 500)
+
+  // Inserir tags
+  if (tagIds?.length) {
+    await sb.from("pop_tags").insert(
+      tagIds.map((tagId: string) => ({ popId: id, tagId }))
+    )
   }
+
+  // Notificar usuários mencionados
+  if (mencionadosIds?.length) {
+    await criarNotificacoesMencao({
+      mencionadosIds,
+      autorId: autorId ?? null,
+      tipo: "mencao_pop",
+      titulo: `Você foi mencionado em um POP`,
+      mensagem: `No POP "${titulo.trim()}"`,
+      referenciaId: id,
+    })
+  }
+
+  return jsonRes(data, 201)
 }

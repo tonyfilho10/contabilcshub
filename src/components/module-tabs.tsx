@@ -10,6 +10,8 @@ import {
   NotebookText,
   Folder,
   Tag,
+  Users,
+  ShieldCheck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -66,4 +68,10 @@ export const ANOTACOES_TABS: TabItem[] = [
   { label: "Minhas Notas", url: "/anotacoes",                  icon: NotebookText, exact: true },
   { label: "Pastas",       url: "/anotacoes/pastas",           icon: Folder },
   { label: "Tags",         url: "/anotacoes/tags",             icon: Tag },
+]
+
+/* Tabs do módulo Administração */
+export const ADMIN_TABS: TabItem[] = [
+  { label: "Usuários",   url: "/admin/usuarios",   icon: Users, exact: true },
+  { label: "Permissões", url: "/admin/permissoes", icon: ShieldCheck },
 ]

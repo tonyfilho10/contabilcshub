@@ -160,4 +160,9 @@
     font-family: var(--font-changa), "Segoe UI", Arial, sans-serif;
     font-weight: 700;
   }
+
+  /* Chip de @menção no editor TipTap */
+  .mention {
+    @apply inline-flex items-center rounded-full bg-primary/10 text-primary font-semibold px-1.5 py-0.5 text-[0.85em] cursor-default select-none;
+  }
 }

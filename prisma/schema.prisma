@@ -14,6 +14,15 @@ enum PopStatus {
   ARQUIVADO
 }
 
+enum Cargo {
+  AUXILIAR
+  ASSISTENTE
+  ANALISTA
+  COORDENADOR
+  CONSULTOR
+  AUDITOR
+}
+
 enum TagType {
   PROCESSO
   AREA
@@ -33,8 +42,9 @@ model Pop {
   atualizadoEm DateTime  @updatedAt
   publicadoEm  DateTime?
 
-  autorId String?
-  autor   Profile? @relation("PopAutor", fields: [autorId], references: [id])
+  autorId        String?
+  autor          Profile? @relation("PopAutor", fields: [autorId], references: [id])
+  mencionadosIds String[]
 
   tags        PopTag[]
   comentarios Comentario[]
@@ -137,13 +147,14 @@ model TagAnotacao {
 }
 
 model Anotacao {
-  id        String   @id @default(cuid())
-  titulo    String
-  conteudo  Json?
-  criadoEm DateTime @default(now())
+  id           String   @id @default(cuid())
+  titulo       String
+  conteudo     Json?
+  criadoEm    DateTime @default(now())
   atualizadoEm DateTime @updatedAt
-  usuarioId String
-  pastaId   String?
+  usuarioId    String
+  pastaId      String?
+  mencionadosIds String[]
 
   pasta PastaAnotacao? @relation(fields: [pastaId], references: [id])
   tags  AnotacaoTag[]
@@ -166,12 +177,50 @@ model Profile {
   nome      String
   email     String   @unique
   avatar    String?
-  cargo     String?
+  cargo     Cargo    @default(AUXILIAR)
+  ativo     Boolean  @default(true)
   criadoEm DateTime @default(now())
 
-  popsAutor   Pop[]             @relation("PopAutor")
-  comentarios Comentario[]
-  historico   HistoricoVersao[]
+  popsAutor        Pop[]             @relation("PopAutor")
+  comentarios      Comentario[]
+  historico        HistoricoVersao[]
+  notificacoes     Notificacao[]
+  pushSubscriptions PushSubscription[]
 
   @@map("profiles")
+}
+
+// ── Notificações ───────────────────────────────────────────
+
+model Notificacao {
+  id           String   @id @default(uuid())
+  usuarioId    String
+  tipo         String
+  titulo       String
+  mensagem     String?
+  lida         Boolean  @default(false)
+  referenciaId String?
+  criadoEm    DateTime @default(now())
+
+  usuario Profile @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+  @@index([lida])
+  @@map("notificacoes")
+}
+
+// ── Push Subscriptions ─────────────────────────────────────
+
+model PushSubscription {
+  id        String   @id @default(uuid())
+  usuarioId String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  criadoEm DateTime @default(now())
+
+  usuario Profile @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  @@index([usuarioId])
+  @@map("push_subscriptions")
 }
