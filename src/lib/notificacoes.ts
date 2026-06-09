@@ -1,4 +1,4 @@
-import { supabaseAdmin } from "./supabase-admin"
+import { createClient } from "./supabase/server"
 import { enviarPushParaUsuarios } from "./push"
 
 export type TipoNotificacao = "mencao_anotacao" | "mencao_pop"
@@ -26,7 +26,8 @@ export async function criarNotificacoesMencao({
   const url = tipo === "mencao_pop" ? `/pops/${referenciaId}` : `/anotacoes/${referenciaId}`
 
   // 1. Salva notificações no banco
-  await supabaseAdmin().from("notificacoes").insert(
+  const sb = await createClient()
+  await sb.from("notificacoes").insert(
     destinatarios.map((uid) => ({
       usuarioId: uid,
       tipo,
