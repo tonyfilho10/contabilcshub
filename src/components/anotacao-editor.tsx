@@ -63,6 +63,12 @@ export function AnotacaoEditor({ modo, id }: AnotacaoEditorProps) {
         setConteudo(d.conteudo ?? "")
         setPastaId(d.pastaId ?? "")
         setMencionadosIds(d.mencionadosIds ?? [])
+        // Pré-popula pastas com a pasta da nota para evitar UUID no Select
+        if (d.pasta) {
+          setPastas((prev) =>
+            prev.some((p) => p.id === d.pasta.id) ? prev : [d.pasta, ...prev]
+          )
+        }
         // tags da anotação: d.tags é [{ tag: { id, nome, cor } }]
         const ids = (d.tags ?? []).map((t: { tag: { id: string } }) => t.tag.id)
         setTagIds(ids)
