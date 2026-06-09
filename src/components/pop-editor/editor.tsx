@@ -107,17 +107,33 @@ export function PopEditor({ content, onChange, onMentionsChange, placeholder, cu
     },
   })
 
-  // Atualiza ref e re-parseia conteúdo para aplicar @você quando o usuário carregar
+  // Aplica "@você" diretamente no DOM para menções ao usuário logado
+  // (ProseMirror não re-renderiza nós "iguais" via renderHTML/setContent)
+  const aplicarVoce = useCallback(() => {
+    if (!editor || !currentUserId) return
+    const dom = editor.view.dom as HTMLElement
+    dom.querySelectorAll<HTMLElement>(`.mention[data-id="${currentUserId}"]`).forEach((el) => {
+      if (el.dataset.me === "true") return
+      el.textContent = "@você"
+      el.dataset.me = "true"
+    })
+  }, [editor, currentUserId])
+
   useEffect(() => {
-    const mudou = currentUserIdRef.current !== currentUserId
     currentUserIdRef.current = currentUserId
-    if (editor && currentUserId && mudou) {
-      const html = editor.getHTML()
-      if (html && html !== "<p></p>") {
-        editor.commands.setContent(html, { emitUpdate: false })
-      }
+    aplicarVoce()
+  }, [currentUserId, editor, aplicarVoce])
+
+  // Reaplica após qualquer atualização do conteúdo (ex: carregamento assíncrono)
+  useEffect(() => {
+    if (!editor) return
+    editor.on("update", aplicarVoce)
+    editor.on("transaction", aplicarVoce)
+    return () => {
+      editor.off("update", aplicarVoce)
+      editor.off("transaction", aplicarVoce)
     }
-  }, [currentUserId, editor])
+  }, [editor, aplicarVoce])
 
   const insertImage = useCallback(() => {
     if (!imageUrl || !editor) return
