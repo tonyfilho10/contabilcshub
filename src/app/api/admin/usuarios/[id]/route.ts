@@ -10,8 +10,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   // Atualizar senha via fetch direto à API admin do Supabase
   if (senha) {
     if (senha.length < 6) return jsonRes({ error: "Senha deve ter pelo menos 6 caracteres" }, 400)
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://lpcetxaaqypxvcwprhff.supabase.co"
-    const serviceKey  = process.env.SUPABASE_SERVICE_ROLE_KEY!
+    const supabaseUrl = "https://lpcetxaaqypxvcwprhff.supabase.co"
+    const serviceKey  = (process.env.SUPABASE_SERVICE_ROLE_KEY ?? "").trim()
     if (!serviceKey) return jsonRes({ error: "Configuração do servidor ausente (service key)" }, 500)
     const res = await fetch(`${supabaseUrl}/auth/v1/admin/users/${id}`, {
       method: "PUT",
