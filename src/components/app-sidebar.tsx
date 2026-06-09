@@ -86,14 +86,15 @@ export function AppSidebar() {
       </SidebarContent>
 
       {/* Rodapé: perfil + tema */}
-      <SidebarFooter className="border-t border-sidebar-border pt-2 pb-2 space-y-1">
+      <SidebarFooter className="border-t border-sidebar-border p-2 gap-1">
+        {/* Perfil */}
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               render={<Link href="/perfil" />}
               tooltip="Meu Perfil"
               isActive={pathname === "/perfil"}
-              className="gap-2.5"
+              className="h-10"
             >
               <Avatar className="h-6 w-6 shrink-0">
                 <AvatarImage src="" />
@@ -107,11 +108,12 @@ export function AppSidebar() {
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
-
-          <SidebarMenuItem>
-            <ThemeToggle />
-          </SidebarMenuItem>
         </SidebarMenu>
+
+        {/* Tema — oculto quando colapsado, visível quando expandido */}
+        <div className="group-data-[collapsible=icon]:hidden">
+          <ThemeToggle />
+        </div>
       </SidebarFooter>
 
       <SidebarRail />
