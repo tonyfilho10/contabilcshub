@@ -60,35 +60,15 @@ export function AppSidebar() {
       href: "/pops",
       match: ["/dashboard", "/pops", "/tags", "/comentarios"],
     },
-    {
-      id: "anotacoes",
-      label: "Anotações",
-      icon: NotebookText,
-      href: "/anotacoes",
-      match: ["/anotacoes"],
-    },
   ]
 
-  const pessoalItens = [
-    {
-      id: "perfil",
-      label: "Meu Perfil",
-      icon: UserCircle,
-      href: "/perfil",
-      match: ["/perfil"],
-    },
-    ...(isAdmin
-      ? [
-          {
-            id: "admin",
-            label: "Administração",
-            icon: ShieldCheck,
-            href: "/admin/usuarios",
-            match: ["/admin"],
-          },
-        ]
-      : []),
-  ]
+  const pessoalAnotacoesItem = {
+    id: "anotacoes",
+    label: "Anotações",
+    icon: NotebookText,
+    href: "/anotacoes",
+    match: ["/anotacoes"],
+  }
 
   function isActive(match: string[]) {
     return match.some((m) => pathname === m || pathname.startsWith(m + "/"))
@@ -145,7 +125,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Pessoal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {/* Avatar + nome como item clicável */}
+              {/* Avatar + nome */}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   render={<Link href="/perfil" />}
@@ -172,6 +152,29 @@ export function AppSidebar() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
+              {/* Anotações */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  render={<Link href={pessoalAnotacoesItem.href} />}
+                  isActive={isActive(pessoalAnotacoesItem.match)}
+                  tooltip={pessoalAnotacoesItem.label}
+                  className="font-semibold"
+                >
+                  <pessoalAnotacoesItem.icon className="h-4 w-4 shrink-0" />
+                  <span>{pessoalAnotacoesItem.label}</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator />
+
+        {/* Configurações */}
+        <SidebarGroup className="px-1">
+          <SidebarGroupLabel>Configurações</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
               {isAdmin && (
                 <SidebarMenuItem>
                   <SidebarMenuButton
@@ -185,17 +188,7 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
 
-        <SidebarSeparator />
-
-        {/* Configurações */}
-        <SidebarGroup className="px-1">
-          <SidebarGroupLabel>Configurações</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   tooltip={theme === "dark" ? "Modo claro" : "Modo escuro"}
