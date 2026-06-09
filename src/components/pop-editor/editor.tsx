@@ -47,6 +47,9 @@ export function PopEditor({ content, onChange, onMentionsChange, placeholder, cu
   // Ref mutable: sempre aponta para a lista mais recente de usuários
   const usersRef = useRef<UsuarioSugestao[]>([])
 
+  // Ref para currentUserId — renderHTML lê em tempo de execução
+  const currentUserIdRef = useRef<string | undefined>(currentUserId)
+
   // Suggestion criada UMA vez; o items() lê o ref em tempo de execução
   const suggestion = useMemo(() => buildMentionSuggestion(usersRef), [])
 
@@ -77,7 +80,7 @@ export function PopEditor({ content, onChange, onMentionsChange, placeholder, cu
         HTMLAttributes: { class: "mention" },
         suggestion,
         renderHTML({ options, node }) {
-          const isMe = currentUserId && node.attrs.id === currentUserId
+          const isMe = currentUserIdRef.current && node.attrs.id === currentUserIdRef.current
           const label = isMe ? "você" : (node.attrs.label ?? node.attrs.id)
           return [
             "span",
@@ -103,6 +106,18 @@ export function PopEditor({ content, onChange, onMentionsChange, placeholder, cu
       },
     },
   })
+
+  // Atualiza ref e re-parseia conteúdo para aplicar @você quando o usuário carregar
+  useEffect(() => {
+    const mudou = currentUserIdRef.current !== currentUserId
+    currentUserIdRef.current = currentUserId
+    if (editor && currentUserId && mudou) {
+      const html = editor.getHTML()
+      if (html && html !== "<p></p>") {
+        editor.commands.setContent(html, { emitUpdate: false })
+      }
+    }
+  }, [currentUserId, editor])
 
   const insertImage = useCallback(() => {
     if (!imageUrl || !editor) return
