@@ -171,6 +171,20 @@ export function AppSidebar() {
           </SidebarMenuItem>
         </SidebarMenu>
 
+        {/* Botão Sair visível */}
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              tooltip="Sair"
+              className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-4 w-4 shrink-0" />
+              <span>Sair</span>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+
         <ThemeToggle />
       </SidebarFooter>
 

@@ -78,7 +78,7 @@ export function UsuarioForm({ open, onOpenChange, inicial, onSave }: UsuarioForm
       setErro("Defina uma senha inicial para o usuário.")
       return
     }
-    if (!isEdicao && form.senha && form.senha.length < 6) {
+    if (form.senha && form.senha.length < 6) {
       setErro("A senha deve ter pelo menos 6 caracteres.")
       return
     }
@@ -129,33 +129,33 @@ export function UsuarioForm({ open, onOpenChange, inicial, onSave }: UsuarioForm
             )}
           </div>
 
-          {/* Senha inicial — só na criação */}
-          {!isEdicao && (
-            <div className="space-y-1">
-              <Label htmlFor="senha">Senha inicial</Label>
-              <div className="relative">
-                <Input
-                  id="senha"
-                  type={showSenha ? "text" : "password"}
-                  value={form.senha ?? ""}
-                  onChange={(e) => setForm((f) => ({ ...f, senha: e.target.value }))}
-                  placeholder="Mínimo 6 caracteres"
-                  className="pr-10"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowSenha((v) => !v)}
-                  tabIndex={-1}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {showSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                O usuário poderá redefinir a senha no perfil após o primeiro acesso.
-              </p>
+          {/* Senha — criação obrigatória, edição opcional */}
+          <div className="space-y-1">
+            <Label htmlFor="senha">{isEdicao ? "Nova senha" : "Senha inicial"}</Label>
+            <div className="relative">
+              <Input
+                id="senha"
+                type={showSenha ? "text" : "password"}
+                value={form.senha ?? ""}
+                onChange={(e) => setForm((f) => ({ ...f, senha: e.target.value }))}
+                placeholder={isEdicao ? "Deixe em branco para não alterar" : "Mínimo 6 caracteres"}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowSenha((v) => !v)}
+                tabIndex={-1}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {showSenha ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
             </div>
-          )}
+            <p className="text-xs text-muted-foreground">
+              {isEdicao
+                ? "Preencha apenas se quiser redefinir a senha deste usuário."
+                : "O usuário poderá redefinir a senha no perfil após o primeiro acesso."}
+            </p>
+          </div>
 
           {/* Cargo */}
           <div className="space-y-1">
