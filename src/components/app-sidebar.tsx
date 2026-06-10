@@ -113,33 +113,6 @@ export function AppSidebar() {
           <SidebarGroupLabel>Pessoal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {/* Avatar + nome */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  render={<Link href="/perfil" />}
-                  isActive={isActive(["/perfil"])}
-                  tooltip="Meu Perfil"
-                  className="h-10"
-                >
-                  <Avatar className="h-6 w-6 shrink-0">
-                    <AvatarImage src={currentUser?.avatar ?? ""} />
-                    <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-[10px] font-bold">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col leading-none min-w-0">
-                    <span className="text-sm font-medium truncate text-sidebar-foreground">
-                      {currentUser?.nome ?? "Meu Perfil"}
-                    </span>
-                    <span className="text-[11px] text-sidebar-foreground/60 truncate">
-                      {currentUser?.cargo
-                        ? currentUser.cargo.charAt(0) + currentUser.cargo.slice(1).toLowerCase()
-                        : "perfil"}
-                    </span>
-                  </div>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
               {/* Anotações */}
               <SidebarMenuItem>
                 <SidebarMenuButton
@@ -197,7 +170,36 @@ export function AppSidebar() {
 
       </SidebarContent>
 
-      <SidebarFooter />
+      {/* Rodapé: perfil */}
+      <SidebarFooter className="border-t border-sidebar-border">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              render={<Link href="/perfil" />}
+              isActive={isActive(["/perfil"])}
+              tooltip="Meu Perfil"
+              className="h-12"
+            >
+              <Avatar className="h-7 w-7 shrink-0">
+                <AvatarImage src={currentUser?.avatar ?? ""} />
+                <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-[10px] font-bold">
+                  {initials}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col leading-none min-w-0">
+                <span className="text-sm font-medium truncate text-sidebar-foreground">
+                  {currentUser?.nome ?? "Meu Perfil"}
+                </span>
+                <span className="text-[11px] text-sidebar-foreground/60 truncate">
+                  {currentUser?.cargo
+                    ? currentUser.cargo.charAt(0) + currentUser.cargo.slice(1).toLowerCase()
+                    : "perfil"}
+                </span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
 
       <SidebarRail />
     </Sidebar>

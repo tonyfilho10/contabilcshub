@@ -54,6 +54,15 @@ interface Nota {
 function resumo(conteudo: any): string {
   if (!conteudo) return ""
   try {
+    // HTML do editor TipTap → texto simples
+    if (typeof conteudo === "string") {
+      return conteudo
+        .replace(/<[^>]+>/g, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .slice(0, 120)
+    }
+
     // TipTap JSON → texto simples
     const texto: string[] = []
     function walk(node: any) {
