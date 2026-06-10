@@ -76,7 +76,38 @@ export function PopEditor({ content, onChange, onMentionsChange, placeholder, cu
       }),
       Highlight,
       Typography,
-      MentionExt.configure({
+      MentionExt.extend({
+        // NodeView: renderiza "@você" reativamente sem manipular o DOM
+        // do ProseMirror diretamente (o que corrompia o mapeamento de
+        // posições e quebrava a aplicação de estilos via toolbar).
+        addNodeView() {
+          return ({ node }) => {
+            const span = document.createElement("span")
+            span.className = "mention"
+
+            const render = () => {
+              const isMe = !!currentUserIdRef.current && node.attrs.id === currentUserIdRef.current
+              const label = isMe ? "você" : (node.attrs.label ?? node.attrs.id)
+              span.textContent = `@${label}`
+              span.dataset.id = node.attrs.id
+              if (isMe) span.dataset.me = "true"
+              else delete span.dataset.me
+            }
+            render()
+
+            return {
+              dom: span,
+              update: (updatedNode) => {
+                if (updatedNode.type !== node.type) return false
+                node = updatedNode
+                render()
+                return true
+              },
+              ignoreMutation: () => true,
+            }
+          }
+        },
+      }).configure({
         HTMLAttributes: { class: "mention" },
         suggestion,
         renderHTML({ options, node }) {
@@ -107,33 +138,14 @@ export function PopEditor({ content, onChange, onMentionsChange, placeholder, cu
     },
   })
 
-  // Aplica "@você" diretamente no DOM para menções ao usuário logado
-  // (ProseMirror não re-renderiza nós "iguais" via renderHTML/setContent)
-  const aplicarVoce = useCallback(() => {
-    if (!editor || !currentUserId) return
-    const dom = editor.view.dom as HTMLElement
-    dom.querySelectorAll<HTMLElement>(`.mention[data-id="${currentUserId}"]`).forEach((el) => {
-      if (el.dataset.me === "true") return
-      el.textContent = "@você"
-      el.dataset.me = "true"
-    })
-  }, [editor, currentUserId])
-
+  // Quando currentUserId chega (ou muda), atualiza o ref e dispara uma
+  // transação vazia para que os node views das menções se re-renderizem
+  // e mostrem "@você" para o usuário logado.
   useEffect(() => {
     currentUserIdRef.current = currentUserId
-    aplicarVoce()
-  }, [currentUserId, editor, aplicarVoce])
-
-  // Reaplica após qualquer atualização do conteúdo (ex: carregamento assíncrono)
-  useEffect(() => {
     if (!editor) return
-    editor.on("update", aplicarVoce)
-    editor.on("transaction", aplicarVoce)
-    return () => {
-      editor.off("update", aplicarVoce)
-      editor.off("transaction", aplicarVoce)
-    }
-  }, [editor, aplicarVoce])
+    editor.view.dispatch(editor.state.tr)
+  }, [currentUserId, editor])
 
   const insertImage = useCallback(() => {
     if (!imageUrl || !editor) return
