@@ -5,34 +5,38 @@ import { criarNotificacoesMencao } from "@/lib/notificacoes"
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
-  const usuarioId = searchParams.get("usuarioId")
-  const busca     = searchParams.get("busca") ?? ""
-  const pastaId   = searchParams.get("pastaId")
+  const busca   = searchParams.get("busca") ?? ""
+  const pastaId = searchParams.get("pastaId")
   const sb = await createClient()
+  const { data: { user } } = await sb.auth.getUser()
+  if (!user) return jsonRes({ error: "Não autenticado" }, 401)
   let q = sb.from("anotacoes")
     .select("*, pasta:pastas_anotacoes(*), tags:anotacao_tags(tag:tags_anotacoes(*))")
+    .eq("usuarioId", user.id)
     .order("atualizadoEm", { ascending: false })
-  if (usuarioId) q = q.eq("usuarioId", usuarioId)
-  if (pastaId)   q = q.eq("pastaId", pastaId)
-  if (busca)     q = q.ilike("titulo", `%${busca}%`)
+  if (pastaId) q = q.eq("pastaId", pastaId)
+  if (busca)   q = q.ilike("titulo", `%${busca}%`)
   const { data, error } = await q
   if (error) return jsonRes({ error: error.message }, 500)
   return jsonRes(data ?? [])
 }
 
 export async function POST(req: NextRequest) {
-  const { titulo, conteudo, usuarioId, pastaId, mencionadosIds, tagIds } = await req.json()
-  if (!titulo?.trim() || !usuarioId)
-    return jsonRes({ error: "título e usuarioId são obrigatórios" }, 400)
+  const { titulo, conteudo, pastaId, mencionadosIds, tagIds } = await req.json()
+  if (!titulo?.trim())
+    return jsonRes({ error: "título é obrigatório" }, 400)
 
   const sb = await createClient()
+  const { data: { user } } = await sb.auth.getUser()
+  if (!user) return jsonRes({ error: "Não autenticado" }, 401)
+
   const now = new Date().toISOString()
   const id = crypto.randomUUID()
   const { data, error } = await sb
     .from("anotacoes")
     .insert({
       id, titulo: titulo.trim(), conteudo: conteudo ?? null,
-      usuarioId, pastaId: pastaId || null,
+      usuarioId: user.id, pastaId: pastaId || null,
       mencionadosIds: mencionadosIds ?? [],
       criadoEm: now, atualizadoEm: now,
     })
@@ -47,7 +51,7 @@ export async function POST(req: NextRequest) {
 
   if (mencionadosIds?.length) {
     await criarNotificacoesMencao({
-      mencionadosIds, autorId: usuarioId,
+      mencionadosIds, autorId: user.id,
       tipo: "mencao_anotacao",
       titulo: `Você foi mencionado em uma anotação`,
       mensagem: `Na anotação "${titulo.trim()}"`,

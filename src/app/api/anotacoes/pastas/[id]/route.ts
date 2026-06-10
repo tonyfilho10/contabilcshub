@@ -10,8 +10,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (cor   !== undefined) updates.cor   = cor
   if (icone !== undefined) updates.icone = icone
   const sb = await createClient()
+  const { data: { user } } = await sb.auth.getUser()
+  if (!user) return jsonRes({ error: "Não autenticado" }, 401)
   const { data, error } = await sb
-    .from("pastas_anotacoes").update(updates).eq("id", id).select().single()
+    .from("pastas_anotacoes").update(updates).eq("id", id).eq("usuarioId", user.id).select().single()
   if (error) return jsonRes({ error: error.message }, 500)
   return jsonRes(data)
 }
@@ -19,7 +21,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const sb = await createClient()
-  const { error } = await sb.from("pastas_anotacoes").delete().eq("id", id)
+  const { data: { user } } = await sb.auth.getUser()
+  if (!user) return jsonRes({ error: "Não autenticado" }, 401)
+  const { error } = await sb.from("pastas_anotacoes").delete().eq("id", id).eq("usuarioId", user.id)
   if (error) return jsonRes({ error: error.message }, 500)
   return jsonRes({ ok: true })
 }

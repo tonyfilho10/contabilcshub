@@ -6,19 +6,24 @@ import { criarNotificacoesMencao } from "@/lib/notificacoes"
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const sb = await createClient()
+  const { data: { user } } = await sb.auth.getUser()
+  if (!user) return jsonRes({ error: "Não autenticado" }, 401)
   const { data, error } = await sb
     .from("anotacoes")
     .select("*, pasta:pastas_anotacoes(*), tags:anotacao_tags(tag:tags_anotacoes(*))")
-    .eq("id", id).single()
+    .eq("id", id).eq("usuarioId", user.id).single()
   if (error) return jsonRes({ error: "Não encontrada" }, 404)
   return jsonRes(data)
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const { titulo, conteudo, pastaId, mencionadosIds, autorId, tagIds } = await req.json()
+  const { titulo, conteudo, pastaId, mencionadosIds, tagIds } = await req.json()
 
   const sb = await createClient()
+  const { data: { user } } = await sb.auth.getUser()
+  if (!user) return jsonRes({ error: "Não autenticado" }, 401)
+
   const updates: Record<string, unknown> = { atualizadoEm: new Date().toISOString() }
   if (titulo         !== undefined) updates.titulo         = titulo
   if (conteudo       !== undefined) updates.conteudo       = conteudo
@@ -26,7 +31,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (mencionadosIds !== undefined) updates.mencionadosIds = mencionadosIds
 
   const { data, error } = await sb
-    .from("anotacoes").update(updates).eq("id", id)
+    .from("anotacoes").update(updates).eq("id", id).eq("usuarioId", user.id)
     .select("*, pasta:pastas_anotacoes(*)").single()
   if (error) return jsonRes({ error: error.message }, 500)
 
@@ -39,7 +44,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   if (mencionadosIds?.length && titulo) {
     await criarNotificacoesMencao({
-      mencionadosIds, autorId: autorId ?? null,
+      mencionadosIds, autorId: user.id,
       tipo: "mencao_anotacao",
       titulo: `Você foi mencionado em uma anotação`,
       mensagem: `Na anotação "${titulo}"`,
@@ -53,7 +58,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const sb = await createClient()
-  const { error } = await sb.from("anotacoes").delete().eq("id", id)
+  const { data: { user } } = await sb.auth.getUser()
+  if (!user) return jsonRes({ error: "Não autenticado" }, 401)
+  const { error } = await sb.from("anotacoes").delete().eq("id", id).eq("usuarioId", user.id)
   if (error) return jsonRes({ error: error.message }, 500)
   return jsonRes({ ok: true })
 }
