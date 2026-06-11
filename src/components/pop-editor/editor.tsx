@@ -133,7 +133,7 @@ export function PopEditor({ content, onChange, onMentionsChange, placeholder, cu
     editorProps: {
       attributes: {
         class:
-          "prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[400px] p-4",
+          "prose prose-sm dark:prose-invert max-w-none focus:outline-none min-h-[700px] p-4",
       },
     },
   })
