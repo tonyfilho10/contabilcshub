@@ -178,11 +178,11 @@ export function AppSidebar() {
               render={<Link href="/perfil" />}
               isActive={isActive(["/perfil"])}
               tooltip="Meu Perfil"
-              className="h-12"
+              className="h-12 overflow-visible"
             >
-              <Avatar className="h-7 w-7 shrink-0">
+              <Avatar className="h-6 w-6 shrink-0">
                 <AvatarImage src={currentUser?.avatar ?? ""} />
-                <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-[10px] font-bold">
+                <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-[9px] font-bold">
                   {initials}
                 </AvatarFallback>
               </Avatar>
