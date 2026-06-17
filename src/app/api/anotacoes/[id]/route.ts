@@ -8,10 +8,14 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const sb = await createClient()
   const { data: { user } } = await sb.auth.getUser()
   if (!user) return jsonRes({ error: "Não autenticado" }, 401)
+
+  // Dono pode editar; usuário mencionado pode visualizar (somente leitura)
   const { data, error } = await sb
     .from("anotacoes")
     .select("*, pasta:pastas_anotacoes(*), tags:anotacao_tags(tag:tags_anotacoes(*))")
-    .eq("id", id).eq("usuarioId", user.id).single()
+    .eq("id", id)
+    .or(`usuarioId.eq.${user.id},mencionadosIds.cs.{"${user.id}"}`)
+    .single()
   if (error) return jsonRes({ error: "Não encontrada" }, 404)
   return jsonRes(data)
 }

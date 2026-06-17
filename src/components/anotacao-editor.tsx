@@ -42,6 +42,15 @@ export function AnotacaoEditor({ modo, id }: AnotacaoEditorProps) {
   const [pastas, setPastas] = useState<Pasta[]>([])
   const [saving, setSaving] = useState(false)
   const [carregando, setCarregando] = useState(modo === "editar")
+  const [somenteLeitura, setSomenteLeitura] = useState(false)
+  const [donoId, setDonoId] = useState<string | null>(null)
+
+  // Determina somente leitura assim que ambos (nota e usuário) estiverem disponíveis
+  useEffect(() => {
+    if (donoId && currentUser?.id) {
+      setSomenteLeitura(donoId !== currentUser.id)
+    }
+  }, [donoId, currentUser?.id])
 
   // Carrega pastas disponíveis (sem filtro para carregar imediatamente)
   useEffect(() => {
@@ -61,6 +70,7 @@ export function AnotacaoEditor({ modo, id }: AnotacaoEditorProps) {
         setConteudo(d.conteudo ?? "")
         setPastaId(d.pastaId ?? "")
         setMencionadosIds(d.mencionadosIds ?? [])
+        if (d.usuarioId) setDonoId(d.usuarioId)
         // Pré-popula pastas com a pasta da nota para evitar UUID no Select
         if (d.pasta) {
           setPastas((prev) =>
@@ -136,28 +146,35 @@ export function AnotacaoEditor({ modo, id }: AnotacaoEditorProps) {
   return (
     <div className="flex flex-col flex-1">
       <PageHeader
-        title={modo === "novo" ? "Nova Nota" : "Editar Nota"}
+        title={somenteLeitura ? "Visualizar Nota" : modo === "novo" ? "Nova Nota" : "Editar Nota"}
         breadcrumbs={[
           { label: "Anotações", href: "/anotacoes" },
-          { label: modo === "novo" ? "Nova Nota" : "Editar Nota" },
+          { label: somenteLeitura ? "Visualizar Nota" : modo === "novo" ? "Nova Nota" : "Editar Nota" },
         ]}
       >
         <Link href="/anotacoes" className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}>
           <ArrowLeft className="h-4 w-4 mr-1" />Voltar
         </Link>
-        {modo === "novo" && (
+        {!somenteLeitura && modo === "novo" && (
           <Button variant="outline" size="sm" onClick={handleTransformarPOP}>
             <FileText className="h-4 w-4 mr-1" />Transformar em POP
           </Button>
         )}
-        <Button size="sm" onClick={handleSave} disabled={saving}>
-          {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
-          {saving ? "Salvando…" : "Salvar"}
-        </Button>
+        {!somenteLeitura && (
+          <Button size="sm" onClick={handleSave} disabled={saving}>
+            {saving ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Save className="h-4 w-4 mr-1" />}
+            {saving ? "Salvando…" : "Salvar"}
+          </Button>
+        )}
       </PageHeader>
 
       <main className="flex-1 p-4 md:p-6">
-        <div className="max-w-5xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-6">
+        {somenteLeitura && (
+          <div className="max-w-5xl mx-auto mb-4 rounded-md border border-amber-400/40 bg-amber-500/10 px-4 py-2 text-sm text-amber-700 dark:text-amber-400">
+            Você foi mencionado nesta nota. Visualização somente leitura.
+          </div>
+        )}
+        <div className={`max-w-5xl mx-auto grid grid-cols-1 ${somenteLeitura ? "" : "lg:grid-cols-[1fr_260px]"} gap-6`}>
           {/* Editor principal */}
           <div className="space-y-4">
             <div className="space-y-1.5">
@@ -168,21 +185,23 @@ export function AnotacaoEditor({ modo, id }: AnotacaoEditorProps) {
                 value={titulo}
                 onChange={(e) => setTitulo(e.target.value)}
                 className="text-lg font-medium h-11"
+                disabled={somenteLeitura}
               />
             </div>
             <div className="space-y-1.5">
               <Label>Conteúdo</Label>
               <PopEditor
                 content={conteudo}
-                onChange={setConteudo}
-                onMentionsChange={setMencionadosIds}
+                onChange={somenteLeitura ? undefined : setConteudo}
+                onMentionsChange={somenteLeitura ? undefined : setMencionadosIds}
                 placeholder="Escreva sua anotação…"
+                readOnly={somenteLeitura}
               />
             </div>
           </div>
 
-          {/* Painel lateral */}
-          <div className="space-y-4">
+          {/* Painel lateral — oculto para usuários somente leitura */}
+          {!somenteLeitura && <div className="space-y-4">
             {/* Organização */}
             <Card>
               <CardHeader className="pb-2">
@@ -236,7 +255,7 @@ export function AnotacaoEditor({ modo, id }: AnotacaoEditorProps) {
                 </p>
               </CardContent>
             </Card>
-          </div>
+          </div>}
         </div>
       </main>
     </div>

@@ -25,6 +25,7 @@ interface PopEditorProps {
   onMentionsChange?: (ids: string[]) => void
   placeholder?: string
   currentUserId?: string
+  readOnly?: boolean
 }
 
 function extractMentionIds(editor: ReturnType<typeof useEditor>): string[] {
@@ -36,7 +37,7 @@ function extractMentionIds(editor: ReturnType<typeof useEditor>): string[] {
   return [...new Set(ids)]
 }
 
-export function PopEditor({ content, onChange, onMentionsChange, placeholder, currentUserId }: PopEditorProps) {
+export function PopEditor({ content, onChange, onMentionsChange, placeholder, currentUserId, readOnly }: PopEditorProps) {
   const [imageDialogOpen, setImageDialogOpen] = useState(false)
   const [linkDialogOpen, setLinkDialogOpen] = useState(false)
   const [imageUrl, setImageUrl] = useState("")
@@ -130,6 +131,7 @@ export function PopEditor({ content, onChange, onMentionsChange, placeholder, cu
       onChange?.(editor.getHTML())
       onMentionsChange?.(extractMentionIds(editor))
     },
+    editable: !readOnly,
     editorProps: {
       attributes: {
         class:
