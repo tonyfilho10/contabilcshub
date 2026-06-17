@@ -38,8 +38,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (pastaId        !== undefined) updates.pastaId        = pastaId || null
   if (mencionadosIds !== undefined) updates.mencionadosIds = mencionadosIds
 
+  // Permite edição pelo dono OU por usuário mencionado
   const { data, error } = await sb
-    .from("anotacoes").update(updates).eq("id", id).eq("usuarioId", user.id)
+    .from("anotacoes").update(updates)
+    .eq("id", id).or(`usuarioId.eq.${user.id},mencionadosIds.cs.{${user.id}}`)
     .select("*, pasta:pastas_anotacoes(*)").single()
   if (error) return jsonRes({ error: error.message }, 500)
 
