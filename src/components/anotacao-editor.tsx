@@ -181,7 +181,6 @@ export function AnotacaoEditor({ modo, id }: AnotacaoEditorProps) {
             </div>
           </div>
 
-          {/* Painel lateral */}
           <div className="space-y-4">
             {/* Organização */}
             <Card>

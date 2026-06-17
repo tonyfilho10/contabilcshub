@@ -8,12 +8,24 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const sb = await createClient()
   const { data: { user } } = await sb.auth.getUser()
   if (!user) return jsonRes({ error: "Não autenticado" }, 401)
-  const { data, error } = await sb
-    .from("anotacoes")
-    .select("*, pasta:pastas_anotacoes(*), tags:anotacao_tags(tag:tags_anotacoes(*))")
+
+  const select = "*, pasta:pastas_anotacoes(*), tags:anotacao_tags(tag:tags_anotacoes(*))"
+
+  // Tenta como dono primeiro
+  const { data: owned } = await sb.from("anotacoes").select(select)
     .eq("id", id).eq("usuarioId", user.id).single()
-  if (error) return jsonRes({ error: "Não encontrada" }, 404)
-  return jsonRes(data)
+  if (owned) return jsonRes(owned)
+
+  // Tenta via notificação de menção (fonte de verdade para quem foi marcado)
+  const { data: notif } = await sb.from("notificacoes")
+    .select("id").eq("usuarioId", user.id)
+    .eq("tipo", "mencao_anotacao").eq("referenciaId", id).maybeSingle()
+  if (!notif) return jsonRes({ error: "Não encontrada" }, 404)
+
+  const { data: mentioned } = await sb.from("anotacoes").select(select)
+    .eq("id", id).single()
+  if (!mentioned) return jsonRes({ error: "Não encontrada" }, 404)
+  return jsonRes(mentioned)
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -30,8 +42,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (pastaId        !== undefined) updates.pastaId        = pastaId || null
   if (mencionadosIds !== undefined) updates.mencionadosIds = mencionadosIds
 
+  // Permite edição pelo dono OU por usuário mencionado
   const { data, error } = await sb
-    .from("anotacoes").update(updates).eq("id", id).eq("usuarioId", user.id)
+    .from("anotacoes").update(updates)
+    .eq("id", id).or(`usuarioId.eq.${user.id},mencionadosIds.cs.{${user.id}}`)
     .select("*, pasta:pastas_anotacoes(*)").single()
   if (error) return jsonRes({ error: error.message }, 500)
 
