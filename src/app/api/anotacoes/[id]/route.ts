@@ -9,15 +9,19 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   const { data: { user } } = await sb.auth.getUser()
   if (!user) return jsonRes({ error: "Não autenticado" }, 401)
 
-  // Dono pode editar; usuário mencionado pode visualizar (somente leitura)
-  const { data, error } = await sb
-    .from("anotacoes")
-    .select("*, pasta:pastas_anotacoes(*), tags:anotacao_tags(tag:tags_anotacoes(*))")
-    .eq("id", id)
-    .or(`usuarioId.eq.${user.id},mencionadosIds.cs.{"${user.id}"}`)
-    .single()
-  if (error) return jsonRes({ error: "Não encontrada" }, 404)
-  return jsonRes(data)
+  const select = "*, pasta:pastas_anotacoes(*), tags:anotacao_tags(tag:tags_anotacoes(*))"
+
+  // Tenta como dono primeiro
+  const { data: owned } = await sb.from("anotacoes").select(select)
+    .eq("id", id).eq("usuarioId", user.id).single()
+  if (owned) return jsonRes(owned)
+
+  // Tenta como mencionado (somente leitura)
+  const { data: mentioned } = await sb.from("anotacoes").select(select)
+    .eq("id", id).contains("mencionadosIds", [user.id]).single()
+  if (mentioned) return jsonRes(mentioned)
+
+  return jsonRes({ error: "Não encontrada" }, 404)
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
