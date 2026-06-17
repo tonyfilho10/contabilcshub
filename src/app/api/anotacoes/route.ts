@@ -8,14 +8,21 @@ export async function GET(req: NextRequest) {
   const busca   = searchParams.get("busca") ?? ""
   const pastaId = searchParams.get("pastaId")
   const sb = await createClient()
+  const tipo = searchParams.get("tipo") ?? "minhas" // "minhas" | "mencionadas"
+
   const { data: { user } } = await sb.auth.getUser()
   if (!user) return jsonRes({ error: "Não autenticado" }, 401)
 
-  // Retorna notas do próprio usuário + notas em que ele é mencionado
   let q = sb.from("anotacoes")
     .select("*, pasta:pastas_anotacoes(*), tags:anotacao_tags(tag:tags_anotacoes(*))")
-    .or(`usuarioId.eq.${user.id},mencionadosIds.cs.{${user.id}}`)
     .order("atualizadoEm", { ascending: false })
+
+  if (tipo === "mencionadas") {
+    q = q.contains("mencionadosIds", [user.id]).neq("usuarioId", user.id)
+  } else {
+    q = q.eq("usuarioId", user.id)
+  }
+
   if (pastaId) q = q.eq("pastaId", pastaId)
   if (busca)   q = q.ilike("titulo", `%${busca}%`)
   const { data, error } = await q
