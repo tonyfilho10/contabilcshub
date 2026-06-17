@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { PageHeader } from "@/components/page-header"
 import { buttonVariants, Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -25,6 +25,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   NotebookText,
   Plus,
   Search,
@@ -35,10 +42,15 @@ import {
   Trash2,
   Loader2,
   AtSign,
+  Tag,
+  X,
 } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+
+interface Pasta { id: string; nome: string; cor: string }
+interface TagItem { id: string; nome: string; cor: string }
 
 interface Nota {
   id: string
@@ -46,7 +58,7 @@ interface Nota {
   conteudo: any
   usuarioId: string
   pastaId: string | null
-  pasta: { nome: string; cor: string } | null
+  pasta: Pasta | null
   tags: { tag: { id: string; nome: string; cor: string } }[]
   mencionadosIds: string[]
   atualizadoEm: string
@@ -184,36 +196,58 @@ export default function AnotacoesPage() {
   const [minhas, setMinhas] = useState<Nota[]>([])
   const [mencionadas, setMencionadas] = useState<Nota[]>([])
   const [busca, setBusca] = useState("")
+  const [pastaId, setPastaId] = useState("")
+  const [tagId, setTagId] = useState("")
+  const [abaAtiva, setAbaAtiva] = useState("minhas")
   const [loadingMinhas, setLoadingMinhas] = useState(true)
   const [loadingMencionadas, setLoadingMencionadas] = useState(true)
   const [excluindo, setExcluindo] = useState<Nota | null>(null)
   const [excluindoLoad, setExcluindoLoad] = useState(false)
+
+  // Derive pastas and tags from the loaded notes for the active tab
+  const notasAtivas = abaAtiva === "minhas" ? minhas : mencionadas
+
+  const pastas = useMemo(() => {
+    const map = new Map<string, Pasta>()
+    notasAtivas.forEach((n) => { if (n.pasta && n.pastaId) map.set(n.pastaId, { ...n.pasta, id: n.pastaId }) })
+    return [...map.values()]
+  }, [notasAtivas])
+
+  const tags = useMemo(() => {
+    const map = new Map<string, TagItem>()
+    notasAtivas.forEach((n) => n.tags.forEach(({ tag }) => map.set(tag.id, tag)))
+    return [...map.values()]
+  }, [notasAtivas])
 
   const carregarMinhas = useCallback(async () => {
     setLoadingMinhas(true)
     try {
       const params = new URLSearchParams({ tipo: "minhas" })
       if (busca) params.set("busca", busca)
+      if (pastaId) params.set("pastaId", pastaId)
+      if (tagId) params.set("tagId", tagId)
       const res = await fetch(`/api/anotacoes?${params}`)
       const data = await res.json()
       setMinhas(Array.isArray(data) ? data : [])
     } finally {
       setLoadingMinhas(false)
     }
-  }, [busca])
+  }, [busca, pastaId, tagId])
 
   const carregarMencionadas = useCallback(async () => {
     setLoadingMencionadas(true)
     try {
       const params = new URLSearchParams({ tipo: "mencionadas" })
       if (busca) params.set("busca", busca)
+      if (pastaId) params.set("pastaId", pastaId)
+      if (tagId) params.set("tagId", tagId)
       const res = await fetch(`/api/anotacoes?${params}`)
       const data = await res.json()
       setMencionadas(Array.isArray(data) ? data : [])
     } finally {
       setLoadingMencionadas(false)
     }
-  }, [busca])
+  }, [busca, pastaId, tagId])
 
   useEffect(() => {
     const t = setTimeout(() => { carregarMinhas(); carregarMencionadas() }, 300)
@@ -245,17 +279,59 @@ export default function AnotacoesPage() {
       </PageHeader>
 
       <main className="flex-1 p-4 md:p-6 space-y-4">
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar notas…"
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            className="pl-9"
-          />
+        <div className="flex flex-wrap gap-2 items-center">
+          <div className="relative w-full max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar notas…"
+              value={busca}
+              onChange={(e) => setBusca(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+
+          {/* Filtro de pasta */}
+          <Select value={pastaId} onValueChange={(v) => setPastaId(!v || v === "__all__" ? "" : v)}>
+            <SelectTrigger className="w-44 h-9">
+              <Folder className="h-3.5 w-3.5 mr-1.5 shrink-0 text-muted-foreground" />
+              <SelectValue placeholder="Pasta" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todas as pastas</SelectItem>
+              {pastas.map((p) => (
+                <SelectItem key={p.id} value={p.id}>{p.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Filtro de tag */}
+          <Select value={tagId} onValueChange={(v) => setTagId(!v || v === "__all__" ? "" : v)}>
+            <SelectTrigger className="w-40 h-9">
+              <Tag className="h-3.5 w-3.5 mr-1.5 shrink-0 text-muted-foreground" />
+              <SelectValue placeholder="Tag" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todas as tags</SelectItem>
+              {tags.map((t) => (
+                <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Limpar filtros */}
+          {(pastaId || tagId) && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-9 px-2 text-muted-foreground"
+              onClick={() => { setPastaId(""); setTagId("") }}
+            >
+              <X className="h-3.5 w-3.5 mr-1" />Limpar
+            </Button>
+          )}
         </div>
 
-        <Tabs defaultValue="minhas">
+        <Tabs value={abaAtiva} onValueChange={(v) => { setAbaAtiva(v); setPastaId(""); setTagId("") }}>
           <TabsList>
             <TabsTrigger value="minhas">
               <NotebookText className="h-3.5 w-3.5 mr-1.5" />

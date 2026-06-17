@@ -7,6 +7,7 @@ export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const busca   = searchParams.get("busca") ?? ""
   const pastaId = searchParams.get("pastaId")
+  const tagId   = searchParams.get("tagId")
   const sb = await createClient()
   const tipo = searchParams.get("tipo") ?? "minhas" // "minhas" | "mencionadas"
 
@@ -36,6 +37,16 @@ export async function GET(req: NextRequest) {
 
   if (pastaId) q = q.eq("pastaId", pastaId)
   if (busca)   q = q.ilike("titulo", `%${busca}%`)
+
+  // Filtro por tag: busca ids das notas que têm essa tag
+  if (tagId) {
+    const { data: tagLinks } = await sb
+      .from("anotacao_tags").select("anotacaoId").eq("tagId", tagId)
+    const ids = (tagLinks ?? []).map((t: any) => t.anotacaoId as string)
+    if (ids.length === 0) return jsonRes([])
+    q = q.in("id", ids)
+  }
+
   const { data, error } = await q
   if (error) return jsonRes({ error: error.message }, 500)
   return jsonRes(data ?? [])
