@@ -1,10 +1,12 @@
 import { NextRequest } from "next/server"
 import { jsonRes } from "@/lib/api-helpers"
 import { createClient } from "@/lib/supabase/server"
+import { createServiceClient } from "@/lib/supabase/service"
 import { criarNotificacoesMencao } from "@/lib/notificacoes"
 
 export async function GET() {
-  const sb = await createClient()
+  // Usa service role para ignorar RLS — POPs são visíveis a todos os usuários da org
+  const sb = createServiceClient()
   const { data, error } = await sb
     .from("pops")
     .select("*, tags:pop_tags(tag:tags(*))")
