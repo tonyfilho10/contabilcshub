@@ -18,7 +18,18 @@ export async function GET(req: NextRequest) {
     .order("atualizadoEm", { ascending: false })
 
   if (tipo === "mencionadas") {
-    q = q.contains("mencionadosIds", [user.id]).neq("usuarioId", user.id)
+    // Busca ids das notas em que este usuário foi mencionado via notificações
+    const { data: notifs } = await sb
+      .from("notificacoes")
+      .select("referenciaId")
+      .eq("usuarioId", user.id)
+      .eq("tipo", "mencao_anotacao")
+      .not("referenciaId", "is", null)
+
+    const ids = [...new Set((notifs ?? []).map((n: any) => n.referenciaId as string))]
+    if (ids.length === 0) return jsonRes([])
+
+    q = q.in("id", ids).neq("usuarioId", user.id)
   } else {
     q = q.eq("usuarioId", user.id)
   }

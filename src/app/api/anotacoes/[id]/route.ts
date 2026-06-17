@@ -16,12 +16,16 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
     .eq("id", id).eq("usuarioId", user.id).single()
   if (owned) return jsonRes(owned)
 
-  // Tenta como mencionado (somente leitura)
-  const { data: mentioned } = await sb.from("anotacoes").select(select)
-    .eq("id", id).contains("mencionadosIds", [user.id]).single()
-  if (mentioned) return jsonRes(mentioned)
+  // Tenta via notificação de menção (fonte de verdade para quem foi marcado)
+  const { data: notif } = await sb.from("notificacoes")
+    .select("id").eq("usuarioId", user.id)
+    .eq("tipo", "mencao_anotacao").eq("referenciaId", id).maybeSingle()
+  if (!notif) return jsonRes({ error: "Não encontrada" }, 404)
 
-  return jsonRes({ error: "Não encontrada" }, 404)
+  const { data: mentioned } = await sb.from("anotacoes").select(select)
+    .eq("id", id).single()
+  if (!mentioned) return jsonRes({ error: "Não encontrada" }, 404)
+  return jsonRes(mentioned)
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
