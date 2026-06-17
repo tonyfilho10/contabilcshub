@@ -1,6 +1,7 @@
 "use client"
 
 import { useCallback, useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import { Bell, BellOff, Check, CheckCheck, FileText, NotebookText, Trash2 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
 import { ptBR } from "date-fns/locale"
@@ -155,6 +156,7 @@ export function NotificationBell() {
                 notificacao={n}
                 onMarcarLida={marcarLida}
                 onApagar={apagarUma}
+                onNavigate={() => setOpen(false)}
               />
             ))
           )}
@@ -168,18 +170,33 @@ function NotificacaoItem({
   notificacao: n,
   onMarcarLida,
   onApagar,
+  onNavigate,
 }: {
   notificacao: Notificacao
   onMarcarLida: (id: string) => void
   onApagar: (id: string) => void
+  onNavigate: () => void
 }) {
+  const router = useRouter()
   const Icone = n.tipo === "mencao_pop" ? FileText : NotebookText
+
+  function handleClick() {
+    if (!n.referenciaId) return
+    if (!n.lida) onMarcarLida(n.id)
+    onNavigate()
+    const url = n.tipo === "mencao_pop"
+      ? `/pops/${n.referenciaId}`
+      : `/anotacoes/${n.referenciaId}/editar`
+    router.push(url)
+  }
 
   return (
     <div
+      onClick={handleClick}
       className={cn(
         "group flex items-start gap-3 px-4 py-3 transition-colors hover:bg-muted/40",
-        !n.lida && "bg-primary/5"
+        !n.lida && "bg-primary/5",
+        n.referenciaId && "cursor-pointer"
       )}
     >
       {/* Ícone do tipo */}
@@ -211,7 +228,7 @@ function NotificacaoItem({
       <div className="flex flex-col items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
         {!n.lida && (
           <button
-            onClick={() => onMarcarLida(n.id)}
+            onClick={(e) => { e.stopPropagation(); onMarcarLida(n.id) }}
             title="Marcar como lida"
             className="text-muted-foreground hover:text-primary transition-colors"
           >
@@ -219,7 +236,7 @@ function NotificacaoItem({
           </button>
         )}
         <button
-          onClick={() => onApagar(n.id)}
+          onClick={(e) => { e.stopPropagation(); onApagar(n.id) }}
           title="Remover"
           className="text-muted-foreground hover:text-destructive transition-colors"
         >
