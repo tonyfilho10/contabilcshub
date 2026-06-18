@@ -6,11 +6,21 @@ import {
   Heading1, Heading2, Heading3,
   List, ListOrdered, Quote, Code, Code2,
   Image, Link, Undo, Redo,
-  Highlighter, Minus,
+  Highlighter, Minus, ChevronDown,
 } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
+import { useState } from "react"
+
+const HIGHLIGHT_COLORS = [
+  { label: "Amarelo",  color: "#fef08a" },
+  { label: "Verde",    color: "#bbf7d0" },
+  { label: "Azul",     color: "#bfdbfe" },
+  { label: "Laranja",  color: "#fed7aa" },
+  { label: "Rosa",     color: "#fbcfe8" },
+  { label: "Roxo",     color: "#e9d5ff" },
+]
 
 interface ToolbarButtonProps {
   onClick: () => void
@@ -48,6 +58,7 @@ interface EditorToolbarProps {
 }
 
 export function EditorToolbar({ editor, onAddImage, onAddLink }: EditorToolbarProps) {
+  const [showHighlightPicker, setShowHighlightPicker] = useState(false)
   if (!editor) return null
 
   return (
@@ -85,9 +96,55 @@ export function EditorToolbar({ editor, onAddImage, onAddLink }: EditorToolbarPr
       <ToolbarButton tooltip="Tachado" isActive={editor.isActive("strike")} onClick={() => editor.chain().focus().toggleStrike().run()}>
         <Strikethrough className="h-3.5 w-3.5" />
       </ToolbarButton>
-      <ToolbarButton tooltip="Destaque" isActive={editor.isActive("highlight")} onClick={() => editor.chain().focus().toggleHighlight().run()}>
-        <Highlighter className="h-3.5 w-3.5" />
-      </ToolbarButton>
+      {/* Marcador de texto com paleta de cores */}
+      <div className="relative">
+        <Tooltip>
+          <TooltipTrigger
+            type="button"
+            onClick={() => setShowHighlightPicker((v) => !v)}
+            className={cn(
+              "inline-flex h-8 items-center gap-0.5 px-1.5 rounded-md text-sm transition-colors",
+              "hover:bg-accent hover:text-accent-foreground focus-visible:outline-none",
+              editor.isActive("highlight") && "bg-accent text-accent-foreground"
+            )}
+          >
+            <Highlighter className="h-3.5 w-3.5" />
+            <ChevronDown className="h-2.5 w-2.5" />
+          </TooltipTrigger>
+          <TooltipContent>Marcador de texto</TooltipContent>
+        </Tooltip>
+
+        {showHighlightPicker && (
+          <div className="absolute top-full left-0 mt-1 z-50 flex flex-col gap-1 rounded-lg border bg-popover p-2 shadow-lg min-w-[160px]">
+            <p className="text-[10px] font-semibold text-muted-foreground px-1 mb-0.5">Marcador de texto</p>
+            <div className="flex flex-wrap gap-1.5 px-1">
+              {HIGHLIGHT_COLORS.map(({ label, color }) => (
+                <button
+                  key={label}
+                  type="button"
+                  title={label}
+                  onClick={() => {
+                    editor.chain().focus().toggleHighlight({ color }).run()
+                    setShowHighlightPicker(false)
+                  }}
+                  className="h-5 w-5 rounded-full border border-border transition-transform hover:scale-110"
+                  style={{ backgroundColor: color }}
+                />
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                editor.chain().focus().unsetHighlight().run()
+                setShowHighlightPicker(false)
+              }}
+              className="mt-1 px-2 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:bg-accent rounded transition-colors text-left"
+            >
+              Remover marcador
+            </button>
+          </div>
+        )}
+      </div>
       <ToolbarButton tooltip="Código inline" isActive={editor.isActive("code")} onClick={() => editor.chain().focus().toggleCode().run()}>
         <Code className="h-3.5 w-3.5" />
       </ToolbarButton>

@@ -11,6 +11,7 @@ import Typography from "@tiptap/extension-typography"
 import MentionExt from "@tiptap/extension-mention"
 import { useState, useCallback, useEffect, useRef, useMemo } from "react"
 import { EditorToolbar } from "./toolbar"
+import { FloatingToolbar } from "./floating-toolbar"
 import { buildMentionSuggestion } from "./mention-suggestion"
 import type { UsuarioSugestao } from "./mention-list"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
@@ -74,7 +75,7 @@ export function PopEditor({ content, onChange, onMentionsChange, placeholder, cu
       Placeholder.configure({
         placeholder: placeholder ?? "Descreva o procedimento detalhadamente…",
       }),
-      Highlight,
+      Highlight.configure({ multicolor: true }),
       Typography,
       MentionExt.extend({
         // NodeView: renderiza "@você" reativamente sem manipular o DOM
@@ -170,6 +171,13 @@ export function PopEditor({ content, onChange, onMentionsChange, placeholder, cu
         onAddImage={() => setImageDialogOpen(true)}
         onAddLink={() => setLinkDialogOpen(true)}
       />
+      {editor && (
+        <FloatingToolbar
+          editor={editor}
+          onAddImage={() => setImageDialogOpen(true)}
+          onAddLink={() => setLinkDialogOpen(true)}
+        />
+      )}
       <EditorContent editor={editor} />
 
       {/* Dialog Imagem */}
