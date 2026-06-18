@@ -280,7 +280,7 @@ export default function AnotacoesPage() {
         </Link>
       </PageHeader>
 
-      <main className="flex-1 p-4 md:p-6 space-y-4">
+      <main className="flex-1 flex flex-col p-4 md:p-6 space-y-4">
         <div className="flex flex-wrap gap-2 items-center">
           <div className="relative w-full max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -333,7 +333,7 @@ export default function AnotacoesPage() {
           )}
         </div>
 
-        <Tabs value={abaAtiva} onValueChange={(v) => { setAbaAtiva(v); setPastaId(""); setTagId("") }}>
+        <Tabs value={abaAtiva} onValueChange={(v) => { setAbaAtiva(v); setPastaId(""); setTagId("") }} className="flex flex-col flex-1">
           <TabsList>
             <TabsTrigger value="minhas">
               <NotebookText className="h-3.5 w-3.5 mr-1.5" />
@@ -397,7 +397,7 @@ export default function AnotacoesPage() {
             />
           </TabsContent>
 
-          <TabsContent value="grafo" className="mt-4">
+          <TabsContent value="grafo" className="mt-4 flex flex-col flex-1">
             <GrafoAnotacoes />
           </TabsContent>
         </Tabs>

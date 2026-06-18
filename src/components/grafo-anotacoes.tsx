@@ -126,7 +126,7 @@ export function GrafoAnotacoes({ initialFiltro = "todos" }: GrafoAnotacoesProps)
   )
 
   return (
-    <div className="rounded-lg border overflow-hidden flex flex-col" style={{ height: 560 }}>
+    <div className="rounded-lg border overflow-hidden flex flex-col h-full min-h-[500px]">
       {/* Barra */}
       <div className="flex items-center justify-between px-3 py-1.5 border-b bg-muted/30 shrink-0">
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
