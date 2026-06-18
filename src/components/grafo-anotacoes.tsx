@@ -29,7 +29,6 @@ export function GrafoAnotacoes({ initialFiltro = "todos" }: GrafoAnotacoesProps)
   const [carregando, setCarregando] = useState(true)
   const [filtro, setFiltro]       = useState<Filtro>(initialFiltro)
   const [dark, setDark]           = useState(false)
-  const containerRef              = useRef<HTMLDivElement>(null)
   const graphRef                  = useRef<any>(null)
   const [dims, setDims]           = useState({ w: 800, h: 500 })
 
@@ -43,14 +42,18 @@ export function GrafoAnotacoes({ initialFiltro = "todos" }: GrafoAnotacoesProps)
     return () => obs.disconnect()
   }, [])
 
-  // Mede o container
+  // Dimensões baseadas no viewport — sem ResizeObserver (evita loop)
   useEffect(() => {
-    if (!containerRef.current) return
-    const ro = new ResizeObserver(([e]) =>
-      setDims({ w: e.contentRect.width, h: e.contentRect.height })
-    )
-    ro.observe(containerRef.current)
-    return () => ro.disconnect()
+    function update() {
+      // sidebar ≈ 256px; header+tabs+padding ≈ 240px
+      setDims({
+        w: Math.max(window.innerWidth - 256 - 48, 300),
+        h: Math.max(window.innerHeight - 240, 300),
+      })
+    }
+    update()
+    window.addEventListener("resize", update)
+    return () => window.removeEventListener("resize", update)
   }, [])
 
   useEffect(() => {
@@ -127,7 +130,7 @@ export function GrafoAnotacoes({ initialFiltro = "todos" }: GrafoAnotacoesProps)
   )
 
   return (
-    <div className="rounded-lg border overflow-hidden flex flex-col flex-1 min-h-[500px]">
+    <div className="rounded-lg border overflow-hidden">
       {/* Barra */}
       <div className="flex items-center justify-between px-3 py-1.5 border-b bg-muted/30 shrink-0">
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
@@ -157,7 +160,7 @@ export function GrafoAnotacoes({ initialFiltro = "todos" }: GrafoAnotacoesProps)
       </div>
 
       {/* Canvas */}
-      <div ref={containerRef} className="flex-1 w-full">
+      <div className="overflow-hidden">
         <ForceGraph2D
           ref={graphRef}
           graphData={graphData}
