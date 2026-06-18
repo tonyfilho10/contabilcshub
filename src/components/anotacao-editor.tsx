@@ -59,9 +59,20 @@ export function AnotacaoEditor({ modo, id }: AnotacaoEditorProps) {
       .then((r) => r.json())
       .then((d) => {
         setTitulo(d.titulo ?? "")
-        setConteudo(d.conteudo ?? "")
+        const html = d.conteudo ?? ""
+        setConteudo(html)
         setPastaId(d.pastaId ?? "")
         setMencionadosIds(d.mencionadosIds ?? [])
+        // Inicializa referências a partir do HTML já salvo
+        if (typeof window !== "undefined" && html) {
+          const doc = new DOMParser().parseFromString(html, "text/html")
+          const links = Array.from(doc.querySelectorAll("a[data-note-link]")).map((el) => ({
+            paraId: (el as HTMLElement).dataset.id ?? "",
+            paraTipo: (el as HTMLElement).dataset.tipo ?? "nota",
+            paraTitulo: el.textContent ?? "",
+          })).filter((r) => r.paraId)
+          setNoteLinkRefs(links)
+        }
         // Pré-popula pastas com a pasta da nota para evitar UUID no Select
         if (d.pasta) {
           setPastas((prev) =>
