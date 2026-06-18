@@ -38,7 +38,7 @@ export const NoteLinkExtension = Node.create({
         "data-tipo": node.attrs.tipo,
         href: node.attrs.tipo === "pop"
           ? `/pops/${node.attrs.id}`
-          : `/anotacoes/${node.attrs.id}/editar`,
+          : `/anotacoes/${node.attrs.id}`,
         class: "note-link",
       }),
       node.attrs.titulo,
@@ -53,7 +53,7 @@ export const NoteLinkExtension = Node.create({
       a.dataset.tipo = node.attrs.tipo
       a.href = node.attrs.tipo === "pop"
         ? `/pops/${node.attrs.id}`
-        : `/anotacoes/${node.attrs.id}/editar`
+        : `/anotacoes/${node.attrs.id}`
       a.className = "note-link"
       a.textContent = node.attrs.titulo
       a.addEventListener("click", (e) => {
