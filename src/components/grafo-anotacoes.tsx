@@ -30,7 +30,8 @@ export function GrafoAnotacoes({ initialFiltro = "todos" }: GrafoAnotacoesProps)
   const [filtro, setFiltro]       = useState<Filtro>(initialFiltro)
   const [dark, setDark]           = useState(false)
   const containerRef              = useRef<HTMLDivElement>(null)
-  const [dims, setDims]           = useState({ w: 800, h: 480 })
+  const graphRef                  = useRef<any>(null)
+  const [dims, setDims]           = useState({ w: 800, h: 500 })
 
   // Detecta dark mode
   useEffect(() => {
@@ -126,7 +127,7 @@ export function GrafoAnotacoes({ initialFiltro = "todos" }: GrafoAnotacoesProps)
   )
 
   return (
-    <div className="rounded-lg border overflow-hidden flex flex-col h-full min-h-[500px]">
+    <div className="rounded-lg border overflow-hidden flex flex-col flex-1 min-h-[500px]">
       {/* Barra */}
       <div className="flex items-center justify-between px-3 py-1.5 border-b bg-muted/30 shrink-0">
         <div className="flex items-center gap-4 text-xs text-muted-foreground">
@@ -158,6 +159,7 @@ export function GrafoAnotacoes({ initialFiltro = "todos" }: GrafoAnotacoesProps)
       {/* Canvas */}
       <div ref={containerRef} className="flex-1 w-full">
         <ForceGraph2D
+          ref={graphRef}
           graphData={graphData}
           width={dims.w}
           height={dims.h}
@@ -175,6 +177,7 @@ export function GrafoAnotacoes({ initialFiltro = "todos" }: GrafoAnotacoesProps)
           cooldownTicks={120}
           d3AlphaDecay={0.02}
           d3VelocityDecay={0.3}
+          onEngineStop={() => graphRef.current?.zoomToFit(400, 60)}
         />
       </div>
     </div>
