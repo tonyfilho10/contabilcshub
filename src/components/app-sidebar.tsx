@@ -9,7 +9,6 @@ import {
   ShieldCheck,
   Sun,
   Moon,
-  Network,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 
@@ -59,13 +58,6 @@ export function AppSidebar() {
     match: ["/anotacoes"],
   }
 
-  const pessoalGrafoItem = {
-    id: "grafo",
-    label: "Grafo",
-    icon: Network,
-    href: "/anotacoes/grafo",
-    match: ["/anotacoes/grafo"],
-  }
 
   function isActive(match: string[]) {
     return match.some((m) => pathname === m || pathname.startsWith(m + "/"))
@@ -132,18 +124,6 @@ export function AppSidebar() {
                 >
                   <pessoalAnotacoesItem.icon className="h-4 w-4 shrink-0" />
                   <span>{pessoalAnotacoesItem.label}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              {/* Grafo */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  render={<Link href={pessoalGrafoItem.href} />}
-                  isActive={isActive(pessoalGrafoItem.match)}
-                  tooltip={pessoalGrafoItem.label}
-                  className="font-semibold"
-                >
-                  <pessoalGrafoItem.icon className="h-4 w-4 shrink-0" />
-                  <span>{pessoalGrafoItem.label}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

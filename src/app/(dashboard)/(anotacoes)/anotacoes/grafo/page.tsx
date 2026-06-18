@@ -124,13 +124,26 @@ export default function GrafoPage() {
             onNodeClick={onNodeClick}
             fitView
             fitViewOptions={{ padding: 0.2 }}
+            colorMode="system"
           >
-            <Background gap={20} size={1} />
-            <Controls />
+            <Background gap={20} size={1} color="hsl(var(--border))" />
+            <Controls
+              style={{
+                background: "hsl(var(--card))",
+                border: "1px solid hsl(var(--border))",
+                borderRadius: 8,
+                boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+              }}
+            />
             <MiniMap
               nodeStrokeWidth={2}
               zoomable
               pannable
+              style={{
+                background: "hsl(var(--card))",
+                border: "1px solid hsl(var(--border))",
+                borderRadius: 8,
+              }}
             />
           </ReactFlow>
         )}

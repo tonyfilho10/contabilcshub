@@ -44,10 +44,12 @@ import {
   AtSign,
   Tag,
   X,
+  Network,
 } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { GrafoAnotacoes } from "@/components/grafo-anotacoes"
 
 interface Pasta { id: string; nome: string; cor: string }
 interface TagItem { id: string; nome: string; cor: string }
@@ -351,6 +353,10 @@ export default function AnotacoesPage() {
                 </span>
               )}
             </TabsTrigger>
+            <TabsTrigger value="grafo">
+              <Network className="h-3.5 w-3.5 mr-1.5" />
+              Grafo
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="minhas" className="mt-4">
@@ -389,6 +395,10 @@ export default function AnotacoesPage() {
                 </Card>
               }
             />
+          </TabsContent>
+
+          <TabsContent value="grafo" className="mt-4">
+            <GrafoAnotacoes />
           </TabsContent>
         </Tabs>
       </main>

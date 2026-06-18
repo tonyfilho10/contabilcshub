@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server"
 import { jsonRes } from "@/lib/api-helpers"
 import { createClient } from "@/lib/supabase/server"
+import { createServiceClient } from "@/lib/supabase/service"
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -10,7 +11,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
   const { data: { user } } = await sb.auth.getUser()
   if (!user) return jsonRes({ error: "Não autenticado" }, 401)
 
-  const { data, error } = await sb
+  const sbService = createServiceClient()
+  const { data, error } = await sbService
     .from("anotacao_referencias")
     .select("*")
     .eq("deAnotacaoId", id)
@@ -27,8 +29,9 @@ export async function PUT(req: NextRequest, { params }: Params) {
   const { data: { user } } = await sb.auth.getUser()
   if (!user) return jsonRes({ error: "Não autenticado" }, 401)
 
-  // Apaga as antigas e reinsere — simples e idempotente
-  await sb.from("anotacao_referencias").delete().eq("deAnotacaoId", id)
+  const sbService = createServiceClient()
+
+  await sbService.from("anotacao_referencias").delete().eq("deAnotacaoId", id)
 
   if (referencias.length > 0) {
     const now = new Date().toISOString()
@@ -40,7 +43,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
       paraTitulo: r.paraTitulo,
       criadoEm: now,
     }))
-    const { error } = await sb.from("anotacao_referencias").insert(rows)
+    const { error } = await sbService.from("anotacao_referencias").insert(rows)
     if (error) return jsonRes({ error: error.message }, 500)
   }
 
