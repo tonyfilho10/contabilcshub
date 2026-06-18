@@ -244,7 +244,7 @@ export function AnotacaoEditor({ modo, id }: AnotacaoEditorProps) {
                   const links = Array.from(doc.querySelectorAll("a[data-note-link]")).map((el) => ({
                     paraId: (el as HTMLElement).dataset.id ?? "",
                     paraTipo: (el as HTMLElement).dataset.tipo ?? "nota",
-                    paraTitulo: el.textContent?.replace(/^\[\[|\]\]$/g, "") ?? "",
+                    paraTitulo: el.textContent ?? "",
                   })).filter((r) => r.paraId)
                   setNoteLinkRefs(links)
                 }}

@@ -41,7 +41,7 @@ export const NoteLinkExtension = Node.create({
           : `/anotacoes/${node.attrs.id}/editar`,
         class: "note-link",
       }),
-      `[[${node.attrs.titulo}]]`,
+      node.attrs.titulo,
     ]
   },
 
@@ -55,7 +55,7 @@ export const NoteLinkExtension = Node.create({
         ? `/pops/${node.attrs.id}`
         : `/anotacoes/${node.attrs.id}/editar`
       a.className = "note-link"
-      a.textContent = `[[${node.attrs.titulo}]]`
+      a.textContent = node.attrs.titulo
       a.addEventListener("click", (e) => {
         e.preventDefault()
         window.location.href = a.href
