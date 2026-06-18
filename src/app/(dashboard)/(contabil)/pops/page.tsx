@@ -33,11 +33,14 @@ import {
   Trash2,
   Clock,
   Loader2,
+  Network,
 } from "lucide-react"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { MentionAvatarStack } from "@/components/mention-avatar-stack"
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
+import { GrafoAnotacoes } from "@/components/grafo-anotacoes"
 
 interface Pop {
   id: string
@@ -56,6 +59,7 @@ export default function POPsPage() {
   const [loading, setLoading] = useState(true)
   const [excluindo, setExcluindo] = useState<Pop | null>(null)
   const [excluindoLoad, setExcluindoLoad] = useState(false)
+  const [aba, setAba] = useState("lista")
 
   const carregar = useCallback(async () => {
     setLoading(true)
@@ -101,101 +105,123 @@ export default function POPsPage() {
       </PageHeader>
 
       <main className="flex-1 p-4 md:p-6 space-y-4">
-        <div className="relative max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar POPs…"
-            value={busca}
-            onChange={(e) => setBusca(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
-          </div>
-        ) : filtrados.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
-              <BookOpen className="h-12 w-12 mb-3 opacity-25" />
-              <p className="text-base font-medium">
-                {busca ? "Nenhum POP encontrado" : "Nenhum POP criado ainda"}
-              </p>
-              {!busca && (
-                <>
-                  <p className="text-sm mt-1">Comece criando o primeiro procedimento.</p>
-                  <Link href="/pops/novo" className={cn(buttonVariants(), "mt-4")}>
-                    <Plus className="h-4 w-4 mr-1" />Criar POP
-                  </Link>
-                </>
+        <Tabs value={aba} onValueChange={setAba}>
+          <TabsList>
+            <TabsTrigger value="lista">
+              <BookOpen className="h-3.5 w-3.5 mr-1.5" />POPs
+              {pops.length > 0 && (
+                <span className="ml-1.5 rounded-full bg-primary/15 text-primary text-[10px] font-bold px-1.5 py-0.5 leading-none">
+                  {pops.length}
+                </span>
               )}
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtrados.map((pop) => (
-              <Card
-                key={pop.id}
-                className="h-full hover:shadow-md hover:border-primary/30 transition-all group relative"
-              >
-                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7" />}>
-                      <MoreVertical className="h-3.5 w-3.5" />
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem render={<Link href={`/pops/${pop.id}/editar`} />}>
-                        <Pencil className="mr-2 h-4 w-4" />Editar
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-destructive focus:text-destructive"
-                        onClick={() => setExcluindo(pop)}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />Excluir
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
+            </TabsTrigger>
+            <TabsTrigger value="grafo">
+              <Network className="h-3.5 w-3.5 mr-1.5" />Grafo
+            </TabsTrigger>
+          </TabsList>
 
-                <Link href={`/pops/${pop.id}`}>
-                  <CardContent className="p-4 flex flex-col gap-2 h-full">
-                    <div className="flex items-start gap-2 pr-6">
-                      <h3 className="font-semibold text-sm leading-snug line-clamp-2 flex-1">{pop.titulo}</h3>
-                      <StatusBadge status={pop.status} />
-                    </div>
-                    {pop.descricao && (
-                      <p className="text-xs text-muted-foreground line-clamp-2">{pop.descricao}</p>
-                    )}
-                    <div className="flex items-center gap-2 flex-wrap mt-auto pt-2 border-t border-border">
-                      {pop.tags.slice(0, 2).map(({ tag }) => (
-                        <Badge
-                          key={tag.id}
-                          variant="outline"
-                          className="text-[10px] h-5 px-1.5"
-                          style={{ borderColor: tag.cor + "66", color: tag.cor }}
-                        >
-                          {tag.nome}
-                        </Badge>
-                      ))}
-                      <span className="text-[10px] text-muted-foreground">v{pop.versao}</span>
-                      {pop.mencionadosIds?.length > 0 && (
-                        <MentionAvatarStack ids={pop.mencionadosIds} max={3} />
-                      )}
-                      <span className="ml-auto flex items-center gap-1 text-[10px] text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        {new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(
-                          new Date(pop.atualizadoEm)
-                        )}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Link>
+          <TabsContent value="lista" className="mt-4 space-y-4">
+            <div className="relative max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar POPs…"
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
+              </div>
+            ) : filtrados.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-16 text-center text-muted-foreground">
+                  <BookOpen className="h-12 w-12 mb-3 opacity-25" />
+                  <p className="text-base font-medium">
+                    {busca ? "Nenhum POP encontrado" : "Nenhum POP criado ainda"}
+                  </p>
+                  {!busca && (
+                    <>
+                      <p className="text-sm mt-1">Comece criando o primeiro procedimento.</p>
+                      <Link href="/pops/novo" className={cn(buttonVariants(), "mt-4")}>
+                        <Plus className="h-4 w-4 mr-1" />Criar POP
+                      </Link>
+                    </>
+                  )}
+                </CardContent>
               </Card>
-            ))}
-          </div>
-        )}
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filtrados.map((pop) => (
+                  <Card
+                    key={pop.id}
+                    className="h-full hover:shadow-md hover:border-primary/30 transition-all group relative"
+                  >
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="h-7 w-7" />}>
+                          <MoreVertical className="h-3.5 w-3.5" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem render={<Link href={`/pops/${pop.id}/editar`} />}>
+                            <Pencil className="mr-2 h-4 w-4" />Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => setExcluindo(pop)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+
+                    <Link href={`/pops/${pop.id}`}>
+                      <CardContent className="p-4 flex flex-col gap-2 h-full">
+                        <div className="flex items-start gap-2 pr-6">
+                          <h3 className="font-semibold text-sm leading-snug line-clamp-2 flex-1">{pop.titulo}</h3>
+                          <StatusBadge status={pop.status} />
+                        </div>
+                        {pop.descricao && (
+                          <p className="text-xs text-muted-foreground line-clamp-2">{pop.descricao}</p>
+                        )}
+                        <div className="flex items-center gap-2 flex-wrap mt-auto pt-2 border-t border-border">
+                          {pop.tags.slice(0, 2).map(({ tag }) => (
+                            <Badge
+                              key={tag.id}
+                              variant="outline"
+                              className="text-[10px] h-5 px-1.5"
+                              style={{ borderColor: tag.cor + "66", color: tag.cor }}
+                            >
+                              {tag.nome}
+                            </Badge>
+                          ))}
+                          <span className="text-[10px] text-muted-foreground">v{pop.versao}</span>
+                          {pop.mencionadosIds?.length > 0 && (
+                            <MentionAvatarStack ids={pop.mencionadosIds} max={3} />
+                          )}
+                          <span className="ml-auto flex items-center gap-1 text-[10px] text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            {new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short" }).format(
+                              new Date(pop.atualizadoEm)
+                            )}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Link>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="grafo" className="mt-4">
+            <GrafoAnotacoes initialFiltro="pops" />
+          </TabsContent>
+        </Tabs>
       </main>
 
       <AlertDialog open={!!excluindo} onOpenChange={(v) => !v && setExcluindo(null)}>
