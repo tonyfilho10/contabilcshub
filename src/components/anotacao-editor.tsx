@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
-import { Save, ArrowLeft, FileText, Loader2 } from "lucide-react"
+import { Save, ArrowLeft, FileText, Loader2, Download } from "lucide-react"
 import Link from "next/link"
 import { PageHeader } from "@/components/page-header"
 import { PopEditor } from "@/components/pop-editor/editor"
@@ -125,6 +125,51 @@ export function AnotacaoEditor({ modo, id }: AnotacaoEditorProps) {
     router.push(`/pops/novo?titulo=${encodeURIComponent(titulo)}`)
   }
 
+  function handleExportarPDF() {
+    const win = window.open("", "_blank")
+    if (!win) return
+    win.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>${titulo}</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Georgia, serif; font-size: 13pt; color: #111; line-height: 1.7; padding: 40px 60px; max-width: 800px; margin: 0 auto; }
+    h1.nota-titulo { font-size: 22pt; font-weight: bold; margin-bottom: 4px; }
+    .nota-meta { font-size: 10pt; color: #555; margin-bottom: 28px; border-bottom: 1px solid #ddd; padding-bottom: 12px; }
+    .nota-conteudo h1 { font-size: 18pt; font-weight: bold; margin: 20px 0 8px; }
+    .nota-conteudo h2 { font-size: 15pt; font-weight: bold; margin: 18px 0 6px; }
+    .nota-conteudo h3 { font-size: 12pt; font-weight: bold; margin: 16px 0 4px; }
+    .nota-conteudo p { margin-bottom: 10px; }
+    .nota-conteudo ul, .nota-conteudo ol { padding-left: 24px; margin-bottom: 10px; }
+    .nota-conteudo li { margin-bottom: 4px; }
+    .nota-conteudo blockquote { border-left: 3px solid #aaa; padding-left: 16px; color: #555; margin: 12px 0; font-style: italic; }
+    .nota-conteudo pre { background: #f4f4f4; padding: 12px; border-radius: 4px; font-family: monospace; font-size: 11pt; white-space: pre-wrap; margin-bottom: 10px; }
+    .nota-conteudo code { background: #f4f4f4; padding: 1px 4px; border-radius: 3px; font-family: monospace; font-size: 10.5pt; }
+    .nota-conteudo pre code { background: none; padding: 0; }
+    .nota-conteudo strong { font-weight: bold; }
+    .nota-conteudo em { font-style: italic; }
+    .nota-conteudo u { text-decoration: underline; }
+    .nota-conteudo s { text-decoration: line-through; }
+    .nota-conteudo mark { padding: 1px 2px; border-radius: 2px; }
+    .nota-conteudo hr { border: none; border-top: 1px solid #ddd; margin: 20px 0; }
+    .nota-conteudo a { color: #0055cc; }
+    .nota-conteudo img { max-width: 100%; height: auto; }
+    .mention { font-weight: bold; color: #0055cc; }
+    @media print { body { padding: 0; } }
+  </style>
+</head>
+<body>
+  <h1 class="nota-titulo">${titulo}</h1>
+  <div class="nota-meta">Exportado em ${new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" })}</div>
+  <div class="nota-conteudo">${conteudo}</div>
+  <script>window.onload = () => { window.print(); }<\/script>
+</body>
+</html>`)
+    win.document.close()
+  }
+
   if (carregando) {
     return (
       <div className="flex items-center justify-center flex-1 py-20">
@@ -148,6 +193,11 @@ export function AnotacaoEditor({ modo, id }: AnotacaoEditorProps) {
         {modo === "novo" && (
           <Button variant="outline" size="sm" onClick={handleTransformarPOP}>
             <FileText className="h-4 w-4 mr-1" />Transformar em POP
+          </Button>
+        )}
+        {modo === "editar" && (
+          <Button variant="outline" size="sm" onClick={handleExportarPDF}>
+            <Download className="h-4 w-4 mr-1" />Exportar PDF
           </Button>
         )}
         <Button size="sm" onClick={handleSave} disabled={saving}>
