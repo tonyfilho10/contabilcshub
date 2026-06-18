@@ -42,6 +42,7 @@ export function AnotacaoEditor({ modo, id }: AnotacaoEditorProps) {
   const [pastas, setPastas] = useState<Pasta[]>([])
   const [saving, setSaving] = useState(false)
   const [carregando, setCarregando] = useState(modo === "editar")
+  const [noteLinkRefs, setNoteLinkRefs] = useState<{ paraId: string; paraTipo: string; paraTitulo: string }[]>([])
 
   // Carrega pastas disponíveis (sem filtro para carregar imediatamente)
   useEffect(() => {
@@ -95,6 +96,12 @@ export function AnotacaoEditor({ modo, id }: AnotacaoEditorProps) {
         })
         if (!res.ok) throw new Error()
         const data = await res.json()
+        // Persiste referências da nota recém-criada
+        await fetch(`/api/anotacoes/${data.id}/referencias`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(noteLinkRefs),
+        })
         toast.success("Nota salva!")
         router.push(`/anotacoes/${data.id}`)
       } else {
@@ -111,6 +118,12 @@ export function AnotacaoEditor({ modo, id }: AnotacaoEditorProps) {
           }),
         })
         if (!res.ok) throw new Error()
+        // Persiste referências atualizadas
+        await fetch(`/api/anotacoes/${id}/referencias`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(noteLinkRefs),
+        })
         toast.success("Nota atualizada!")
         router.push(`/anotacoes/${id}`)
       }
@@ -224,7 +237,17 @@ export function AnotacaoEditor({ modo, id }: AnotacaoEditorProps) {
               <Label>Conteúdo</Label>
               <PopEditor
                 content={conteudo}
-                onChange={setConteudo}
+                onChange={(html) => {
+                  setConteudo(html)
+                  // Extrai noteLinks do HTML para persistir referências
+                  const doc = new DOMParser().parseFromString(html, "text/html")
+                  const links = Array.from(doc.querySelectorAll("a[data-note-link]")).map((el) => ({
+                    paraId: (el as HTMLElement).dataset.id ?? "",
+                    paraTipo: (el as HTMLElement).dataset.tipo ?? "nota",
+                    paraTitulo: el.textContent?.replace(/^\[\[|\]\]$/g, "") ?? "",
+                  })).filter((r) => r.paraId)
+                  setNoteLinkRefs(links)
+                }}
                 onMentionsChange={setMencionadosIds}
                 placeholder="Escreva sua anotação…"
               />
