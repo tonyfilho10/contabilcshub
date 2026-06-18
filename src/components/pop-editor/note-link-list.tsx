@@ -52,17 +52,17 @@ export const NoteLinkList = forwardRef<NoteLinkListHandle, NoteLinkListProps>(
     }
 
     return (
-      <div className="rounded-lg border bg-popover shadow-md overflow-hidden min-w-[260px] z-50 max-h-72 overflow-y-auto">
+      <div className="rounded-lg border border-border bg-popover shadow-lg overflow-hidden min-w-[260px] z-50 max-h-72 overflow-y-auto">
         {items.map((item, i) => (
           <button
             key={`${item.tipo}-${item.id}`}
             type="button"
             onClick={() => command(item)}
             className={cn(
-              "flex items-center gap-2.5 w-full px-3 py-2 text-sm text-left transition-colors",
+              "flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-left transition-colors",
               i === selectedIndex
                 ? "bg-primary text-primary-foreground"
-                : "hover:bg-muted"
+                : "text-popover-foreground hover:bg-accent hover:text-accent-foreground"
             )}
           >
             {item.tipo === "criar" ? (
@@ -75,7 +75,10 @@ export const NoteLinkList = forwardRef<NoteLinkListHandle, NoteLinkListProps>(
             <div className="leading-tight min-w-0">
               <p className="font-medium truncate">{item.titulo}</p>
               {item.tipo !== "criar" && (
-                <p className={cn("text-[10px] truncate", i === selectedIndex ? "text-primary-foreground/70" : "text-muted-foreground")}>
+                <p className={cn(
+                  "text-[10px] truncate",
+                  i === selectedIndex ? "text-primary-foreground/75" : "text-muted-foreground"
+                )}>
                   {item.tipo === "pop" ? "POP" : "Anotação"}
                 </p>
               )}
