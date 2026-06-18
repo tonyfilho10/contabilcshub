@@ -163,16 +163,32 @@
 
   /* Chip de @menção no editor TipTap */
   .mention {
-    @apply inline-flex items-center rounded-full bg-primary/10 text-primary font-semibold px-1.5 py-0.5 text-[0.85em] cursor-default select-none;
+    @apply inline-flex items-center rounded-full bg-blue-500/10 text-blue-600 dark:bg-blue-400/15 dark:text-blue-300 font-semibold px-1.5 py-0.5 text-[0.85em] cursor-default select-none;
   }
 
   /* @você — destaque especial para o próprio usuário */
   .mention[data-me="true"] {
-    @apply bg-primary/20 text-primary ring-1 ring-primary/40;
+    @apply bg-blue-500/20 text-blue-700 dark:bg-blue-400/25 dark:text-blue-200 ring-1 ring-blue-400/40;
   }
 
-  /* link de nota/pop */
+  /* link de nota/pop — funciona dentro e fora do prose-invert */
   a.note-link {
-    @apply inline-flex items-center gap-1 rounded-md bg-violet-500/12 text-violet-700 dark:text-violet-300 font-semibold px-2 py-0.5 text-[0.88em] no-underline border border-violet-400/30 hover:bg-violet-500/25 hover:border-violet-400/60 transition-all cursor-pointer shadow-sm;
+    @apply inline-flex items-center gap-1 rounded-md font-semibold px-2 py-0.5 text-[0.88em] no-underline border transition-all cursor-pointer shadow-sm;
+    background-color: rgb(139 92 246 / 0.12);
+    color: #7c3aed;
+    border-color: rgb(139 92 246 / 0.3);
+  }
+  a.note-link:hover {
+    background-color: rgb(139 92 246 / 0.22);
+    border-color: rgb(139 92 246 / 0.5);
+  }
+  .dark a.note-link {
+    background-color: rgb(167 139 250 / 0.15);
+    color: #c4b5fd;
+    border-color: rgb(167 139 250 / 0.3);
+  }
+  .dark a.note-link:hover {
+    background-color: rgb(167 139 250 / 0.25);
+    border-color: rgb(167 139 250 / 0.5);
   }
 }
