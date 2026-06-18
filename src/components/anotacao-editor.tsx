@@ -136,7 +136,6 @@ export function AnotacaoEditor({ modo, id }: AnotacaoEditorProps) {
           body: JSON.stringify(noteLinkRefs),
         })
         toast.success("Nota atualizada!")
-        router.push(`/anotacoes/${id}`)
       }
     } catch {
       toast.error("Não foi possível salvar a nota.")
