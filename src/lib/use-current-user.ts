@@ -72,3 +72,7 @@ export function podeVerAdmin(cargo: Cargo | undefined): boolean {
   if (!cargo) return false
   return CARGOS_ADMIN.includes(cargo)
 }
+
+export function ehSocio(cargo: Cargo | undefined): boolean {
+  return cargo === "SOCIO"
+}

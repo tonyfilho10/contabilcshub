@@ -5,6 +5,7 @@ export type Cargo =
   | "COORDENADOR"
   | "CONSULTOR"
   | "AUDITOR"
+  | "SOCIO"
 
 export interface PermissaoSet {
   pops: {
@@ -60,6 +61,11 @@ export const PERMISSOES: Record<Cargo, PermissaoSet> = {
     anotacoes: { criar: true,       editar: true, excluir: true },
     admin:     { verUsuarios: true,  criarUsuario: false, editarUsuario: false, excluirUsuario: false, gerenciarCargos: false },
   },
+  SOCIO: {
+    pops:      { visualizar: true, criar: true, editar: true, excluir: true, aprovar: true, publicar: true },
+    anotacoes: { criar: true, editar: true, excluir: true },
+    admin:     { verUsuarios: true, criarUsuario: true, editarUsuario: true, excluirUsuario: true, gerenciarCargos: true },
+  },
 }
 
 export const CARGO_CONFIG: Record<Cargo, { label: string; cor: string; descricao: string }> = {
@@ -69,8 +75,9 @@ export const CARGO_CONFIG: Record<Cargo, { label: string; cor: string; descricao
   COORDENADOR: { label: "Coordenador", cor: "#f97316", descricao: "Aprova, publica POPs e gerencia equipe" },
   CONSULTOR:   { label: "Consultor",   cor: "#34d399", descricao: "Cria, edita e aprova POPs" },
   AUDITOR:     { label: "Auditor",     cor: "#fbbf24", descricao: "Visualiza e audita POPs e usuários" },
+  SOCIO:       { label: "Sócio",       cor: "#C9A84C", descricao: "Acesso total ao sistema e módulos de gestão" },
 }
 
 export const CARGOS_ORDENADOS: Cargo[] = [
-  "AUXILIAR", "ASSISTENTE", "ANALISTA", "COORDENADOR", "CONSULTOR", "AUDITOR",
+  "AUXILIAR", "ASSISTENTE", "ANALISTA", "COORDENADOR", "CONSULTOR", "AUDITOR", "SOCIO",
 ]

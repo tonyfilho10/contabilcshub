@@ -21,6 +21,7 @@ enum Cargo {
   COORDENADOR
   CONSULTOR
   AUDITOR
+  SOCIO
 }
 
 enum TagType {
