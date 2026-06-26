@@ -225,3 +225,148 @@ model PushSubscription {
   @@index([usuarioId])
   @@map("push_subscriptions")
 }
+
+// ── Módulo de Gestão: Reuniões ────────────────────────────────
+
+model Reuniao {
+  id          String    @id @default(cuid())
+  tema        String
+  status      String    @default("ABERTA")
+  criadoEm   DateTime  @default(now())
+  encerradoEm DateTime?
+  decisoes    Decisao[]
+
+  @@map("reunioes")
+}
+
+model Decisao {
+  id            String   @id @default(cuid())
+  reuniaoId     String
+  reuniao       Reuniao  @relation(fields: [reuniaoId], references: [id], onDelete: Cascade)
+  descricao     String
+  responsavelId String
+  prazo         DateTime
+  contexto      String
+  status        String   @default("PENDENTE")
+  criadoEm     DateTime @default(now())
+  tarefas       Tarefa[]
+
+  @@map("decisoes")
+}
+
+model Tarefa {
+  id                String   @id @default(cuid())
+  decisaoId         String?
+  decisao           Decisao? @relation(fields: [decisaoId], references: [id], onDelete: SetNull)
+  descricao         String
+  responsavelId     String
+  prazo             DateTime
+  contexto          String
+  status            String   @default("RECEBIDO")
+  motivoTravado     String?
+  leituraConfirmada Boolean  @default(false)
+  criadoPor         String
+  criadoEm         DateTime @default(now())
+  atualizadoEm     DateTime @updatedAt
+
+  @@map("tarefas")
+}
+
+// ── Módulo de Gestão: OKR ─────────────────────────────────────
+
+model Okr {
+  id            String      @id @default(cuid())
+  titulo        String
+  tipo          String
+  cluster       String?
+  responsavelId String
+  ciclo         String
+  progresso     Int         @default(0)
+  status        String      @default("NO_PRAZO")
+  keyResults    KeyResult[]
+  criadoEm     DateTime    @default(now())
+
+  @@map("okrs")
+}
+
+model KeyResult {
+  id        String @id @default(cuid())
+  okrId     String
+  okr       Okr    @relation(fields: [okrId], references: [id], onDelete: Cascade)
+  descricao String
+  meta      Float
+  atual     Float  @default(0)
+  unidade   String
+
+  @@map("key_results")
+}
+
+// ── Módulo de Gestão: Rituais ─────────────────────────────────
+
+model Ritual {
+  id               String       @id @default(cuid())
+  nome             String
+  frequencia       String
+  duracaoMin       Int
+  facilitadorId    String
+  participantesIds String[]
+  ocorrencias      Ocorrencia[]
+  criadoEm        DateTime     @default(now())
+
+  @@map("rituais")
+}
+
+model Ocorrencia {
+  id            String   @id @default(cuid())
+  ritualId      String
+  ritual        Ritual   @relation(fields: [ritualId], references: [id], onDelete: Cascade)
+  data          DateTime
+  ata           String?
+  facilitadorId String?
+  criadoEm     DateTime @default(now())
+
+  @@map("ocorrencias")
+}
+
+// ── Módulo de Gestão: Backlog ─────────────────────────────────
+
+model Backlog {
+  id            String   @id @default(cuid())
+  nome          String
+  descricao     String?
+  area          String
+  prioridade    String
+  status        String   @default("BACKLOG")
+  responsavelId String?
+  criadoEm     DateTime @default(now())
+  atualizadoEm DateTime @updatedAt
+
+  @@map("backlog")
+}
+
+// ── Módulo de Gestão: Indicadores ─────────────────────────────
+
+model Indicador {
+  id            String    @id @default(cuid())
+  nome          String
+  cluster       String
+  responsavelId String
+  meta          Float
+  unidade       String
+  medicoes      Medicao[]
+  criadoEm     DateTime  @default(now())
+
+  @@map("indicadores")
+}
+
+model Medicao {
+  id            String    @id @default(cuid())
+  indicadorId   String
+  indicador     Indicador @relation(fields: [indicadorId], references: [id], onDelete: Cascade)
+  valor         Float
+  data          DateTime
+  atualizadoPor String
+  criadoEm     DateTime  @default(now())
+
+  @@map("medicoes")
+}
