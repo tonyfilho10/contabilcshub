@@ -66,7 +66,7 @@ export function useCurrentUser() {
 }
 
 /** Cargos que têm acesso à aba de Administração */
-export const CARGOS_ADMIN: Cargo[] = ["ANALISTA", "COORDENADOR", "CONSULTOR", "AUDITOR"]
+export const CARGOS_ADMIN: Cargo[] = ["ANALISTA", "COORDENADOR", "CONSULTOR", "AUDITOR", "SOCIO"]
 
 export function podeVerAdmin(cargo: Cargo | undefined): boolean {
   if (!cargo) return false
