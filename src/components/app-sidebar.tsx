@@ -9,6 +9,13 @@ import {
   ShieldCheck,
   Sun,
   Moon,
+  Calendar,
+  CheckSquare,
+  Target,
+  RefreshCw,
+  List,
+  BarChart2,
+  Briefcase,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 
@@ -27,7 +34,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { useCurrentUser, podeVerAdmin } from "@/lib/use-current-user"
+import { useCurrentUser, podeVerAdmin, ehSocio } from "@/lib/use-current-user"
 
 export function AppSidebar() {
   const pathname = usePathname()
@@ -39,6 +46,17 @@ export function AppSidebar() {
     : "US"
 
   const isAdmin = podeVerAdmin(currentUser?.cargo)
+  const isSocio = ehSocio(currentUser?.cargo)
+
+  const gestaoItens = [
+    { id: "gestao-home",        label: "Visão do Dia",  icon: Briefcase,    href: "/gestao",             match: ["/gestao"] },
+    { id: "novas-dez",          label: "Novas Dez",     icon: Calendar,     href: "/gestao/novas-dez",   match: ["/gestao/novas-dez"] },
+    { id: "gestao-tarefas",     label: "Tarefas",       icon: CheckSquare,  href: "/gestao/tarefas",     match: ["/gestao/tarefas"] },
+    { id: "gestao-okrs",        label: "OKRs",          icon: Target,       href: "/gestao/okrs",        match: ["/gestao/okrs"] },
+    { id: "gestao-rituais",     label: "Rituais",       icon: RefreshCw,    href: "/gestao/rituais",     match: ["/gestao/rituais"] },
+    { id: "gestao-backlog",     label: "Backlog",       icon: List,         href: "/gestao/backlog",     match: ["/gestao/backlog"] },
+    { id: "gestao-indicadores", label: "Indicadores",   icon: BarChart2,    href: "/gestao/indicadores", match: ["/gestao/indicadores"] },
+  ]
 
   const modulosItens = [
     {
@@ -129,6 +147,32 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {isSocio && (
+          <>
+            <SidebarSeparator />
+            <SidebarGroup className="px-1">
+              <SidebarGroupLabel>Gestão</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {gestaoItens.map((item) => (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                        render={<Link href={item.href} />}
+                        isActive={isActive(item.match)}
+                        tooltip={item.label}
+                        className="font-semibold"
+                      >
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        <span>{item.label}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        )}
 
         <SidebarSeparator />
 
