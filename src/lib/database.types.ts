@@ -58,6 +58,11 @@ export interface Database {
         Insert: { anotacaoId: string; tagId: string }
         Update: { anotacaoId?: string; tagId?: string }
       }
+      rubrica_mapeamentos: {
+        Row:    { id: string; codigo: string; descricao: string; grupo: string; lancamento: string | null; contaDebito: string | null; contaCredito: string | null; historico: string | null; origem: string; criadoEm: string; atualizadoEm: string }
+        Insert: { id: string; codigo: string; descricao: string; grupo: string; lancamento?: string | null; contaDebito?: string | null; contaCredito?: string | null; historico?: string | null; origem?: string; criadoEm?: string; atualizadoEm?: string }
+        Update: { codigo?: string; descricao?: string; grupo?: string; lancamento?: string | null; contaDebito?: string | null; contaCredito?: string | null; historico?: string | null; origem?: string; atualizadoEm?: string }
+      }
     }
     Views:    Record<string, never>
     Functions: Record<string, never>

@@ -32,6 +32,18 @@ enum TagType {
   CUSTOM
 }
 
+enum RubricaGrupo {
+  FOLHA_NORMAL
+  FERIAS
+  RESCISAO
+  EMPRESA
+}
+
+enum RubricaOrigem {
+  IMPORTADO
+  MANUAL
+}
+
 model Pop {
   id           String    @id @default(cuid())
   titulo       String
@@ -189,6 +201,25 @@ model Profile {
   pushSubscriptions PushSubscription[]
 
   @@map("profiles")
+}
+
+// ── Módulo de Rubricas ─────────────────────────────────────
+
+model RubricaMapeamento {
+  id           String        @id @default(cuid())
+  codigo       String
+  descricao    String
+  grupo        RubricaGrupo
+  lancamento   String?
+  contaDebito  String?
+  contaCredito String?
+  historico    String?
+  origem       RubricaOrigem @default(MANUAL)
+  criadoEm     DateTime      @default(now())
+  atualizadoEm DateTime      @updatedAt
+
+  @@unique([codigo, grupo])
+  @@map("rubrica_mapeamentos")
 }
 
 // ── Notificações ───────────────────────────────────────────
