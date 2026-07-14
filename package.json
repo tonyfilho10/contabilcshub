@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.111.0",
     "@base-ui/react": "^1.5.0",
     "@netlify/plugin-nextjs": "^5.15.11",
     "@opentelemetry/api": "^1.9.1",

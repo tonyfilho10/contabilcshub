@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import {
   Calculator,
   BookOpen,
+  ListChecks,
   NotebookText,
   ShieldCheck,
   Sun,
@@ -47,6 +48,13 @@ export function AppSidebar() {
       icon: BookOpen,
       href: "/pops",
       match: ["/dashboard", "/pops", "/tags", "/comentarios"],
+    },
+    {
+      id: "rubricas",
+      label: "Rubricas",
+      icon: ListChecks,
+      href: "/rubricas",
+      match: ["/rubricas"],
     },
   ]
 
