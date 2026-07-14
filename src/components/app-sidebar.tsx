@@ -17,6 +17,7 @@ import {
   List,
   BarChart2,
   Briefcase,
+  ClipboardCheck,
 } from "lucide-react"
 import { useTheme } from "next-themes"
 
@@ -73,6 +74,13 @@ export function AppSidebar() {
       icon: ListChecks,
       href: "/rubricas",
       match: ["/rubricas"],
+    },
+    {
+      id: "conferencias",
+      label: "Conferências",
+      icon: ClipboardCheck,
+      href: "/conferencias",
+      match: ["/conferencias"],
     },
   ]
 
