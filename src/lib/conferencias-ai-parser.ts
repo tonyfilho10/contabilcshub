@@ -1,29 +1,43 @@
 import Anthropic from "@anthropic-ai/sdk"
+import { PDFParse } from "pdf-parse"
+import type { ContaGrupo, Natureza, ResumoLinha } from "@/lib/conferencias-types"
 
-export type ContaGrupo = "ATIVO" | "PASSIVO" | "PL" | "DESPESA" | "RECEITA" | "APURACAO" | "COMPENSACAO"
-export type Natureza = "D" | "C"
-
-export interface ContaBalancete {
-  codigo: string
+/** Conta sem a descrição — saída enxuta para caber no limite de tempo de uma função serverless. */
+export interface ContaIndice {
   classificacao: string
-  descricao: string
   saldoAtual: number
   natureza: Natureza
   grupo: ContaGrupo
 }
 
-export interface ResumoLinha {
+export interface DescricaoConta {
+  classificacao: string
   descricao: string
-  saldoAtual: number
-  natureza: Natureza
 }
 
-export interface BalanceteExtraido {
-  contas: ContaBalancete[]
+export interface BalanceteIndice {
+  contas: ContaIndice[]
   resumo: ResumoLinha[]
 }
 
-const RESPONSE_SCHEMA = {
+const CONTEXTO_BALANCETE = [
+  "Este é um Balancete de Verificação contábil brasileiro. Ele lista contas em uma árvore hierárquica",
+  "(colunas: Código, Classificação, Descrição da conta, Saldo Anterior, Débito, Crédito, Saldo Atual),",
+  "seguida de uma seção final \"RESUMO DO BALANCETE\".",
+].join("\n")
+
+const client = new Anthropic()
+
+function documentoPdf(pdfBuffer: Buffer) {
+  return {
+    type: "document" as const,
+    source: { type: "base64" as const, media_type: "application/pdf" as const, data: pdfBuffer.toString("base64") },
+    // Permite que chamadas subsequentes com o mesmo PDF reaproveitem o processamento já feito.
+    cache_control: { type: "ephemeral" as const },
+  }
+}
+
+const INDICE_SCHEMA = {
   type: "object",
   properties: {
     contas: {
@@ -31,9 +45,7 @@ const RESPONSE_SCHEMA = {
       items: {
         type: "object",
         properties: {
-          codigo: { type: "string" },
           classificacao: { type: "string" },
-          descricao: { type: "string" },
           saldoAtual: { type: "number" },
           natureza: { type: "string", enum: ["D", "C"] },
           grupo: {
@@ -41,7 +53,7 @@ const RESPONSE_SCHEMA = {
             enum: ["ATIVO", "PASSIVO", "PL", "DESPESA", "RECEITA", "APURACAO", "COMPENSACAO"],
           },
         },
-        required: ["codigo", "classificacao", "descricao", "saldoAtual", "natureza", "grupo"],
+        required: ["classificacao", "saldoAtual", "natureza", "grupo"],
         additionalProperties: false,
       },
     },
@@ -63,54 +75,72 @@ const RESPONSE_SCHEMA = {
   additionalProperties: false,
 } as const
 
-const client = new Anthropic()
+/**
+ * Divide o PDF em texto por página (via pdf-parse, sem IA — rápido e determinístico).
+ * A extração de texto pode embaralhar a ordem das colunas dentro de cada linha, mas cada
+ * conta fica em uma linha própria com todos os valores presentes, o que é suficiente para
+ * a IA reconstruir a estrutura.
+ */
+export async function extrairPaginasTexto(pdfBuffer: Buffer): Promise<string[]> {
+  const parser = new PDFParse({ data: pdfBuffer })
+  try {
+    const resultado = await parser.getText()
+    return resultado.pages.map((p) => p.text)
+  } finally {
+    await parser.destroy()
+  }
+}
 
 /**
- * Extrai as contas e o resumo de um balancete de verificação a partir do PDF
- * original via Claude — evita depender de extração de texto/tabelas em
- * layouts com colunas alinhadas por espaçamento.
+ * Primeira etapa (repetida uma vez por página): extrai só os campos curtos de cada conta
+ * (sem a descrição) e, se presente na página, o resumo. Processar por página — em vez do
+ * PDF inteiro de uma vez — mantém a saída de cada chamada pequena o bastante para caber no
+ * limite de tempo de uma função serverless mesmo em balancetes grandes.
  */
-export async function parseBalanceteComIA(pdfBuffer: Buffer): Promise<BalanceteExtraido> {
+export async function parseIndicePaginaComIA(
+  paginaTexto: string,
+  paginaNum: number,
+  totalPaginas: number
+): Promise<BalanceteIndice> {
   const stream = client.messages.stream({
     model: "claude-opus-4-8",
-    max_tokens: 32000,
-    output_config: { format: { type: "json_schema", schema: RESPONSE_SCHEMA } },
+    max_tokens: 8000,
+    output_config: { format: { type: "json_schema", schema: INDICE_SCHEMA } },
     messages: [
       {
         role: "user",
         content: [
           {
-            type: "document",
-            source: { type: "base64", media_type: "application/pdf", data: pdfBuffer.toString("base64") },
-          },
-          {
             type: "text",
             text: [
-              "Este é um Balancete de Verificação contábil brasileiro. Ele lista contas em uma árvore hierárquica",
-              "(colunas: Código, Classificação, Descrição da conta, Saldo Anterior, Débito, Crédito, Saldo Atual),",
-              "seguida de uma seção final \"RESUMO DO BALANCETE\".",
+              `O texto abaixo é a página ${paginaNum} de ${totalPaginas} de um Balancete de Verificação`,
+              "contábil brasileiro (extraído via biblioteca de texto de PDF — a ordem das colunas dentro de",
+              "cada linha pode estar embaralhada, mas cada conta ocupa uma linha própria e todos os valores",
+              "estão presentes).",
               "",
-              "1) Em `contas`, extraia TODAS as linhas de conta (sintéticas e analíticas) cujo Saldo Atual seja",
-              "diferente de zero. Ignore linhas com Saldo Atual \"0,00\" (sem letra D/C, sem natureza definida).",
-              "Para cada conta:",
-              "- `codigo`: o número da coluna \"Código\" (identificador da linha).",
-              "- `classificacao`: o código hierárquico da coluna \"Classificação\" (ex: \"1.1.1.01.001\").",
-              "- `descricao`: a descrição da conta, exatamente como impressa (preserve o prefixo \"(-)\" quando houver).",
-              "- `saldoAtual`: o valor numérico do Saldo Atual, sem o sufixo D/C (use ponto decimal, sem separador de milhar).",
-              "- `natureza`: \"D\" ou \"C\", conforme o sufixo impresso ao lado do Saldo Atual.",
-              "- `grupo`: a que seção de topo do balancete a conta pertence, com base nos cabeçalhos do documento:",
-              "  \"ATIVO\" para contas dentro da seção ATIVO; \"PASSIVO\" para contas dentro da seção PASSIVO",
-              "  (exceto Patrimônio Líquido); \"PL\" para contas de Patrimônio Líquido (mesmo se numeradas como",
-              "  subconta do Passivo, ex: código \"2.4\"); \"DESPESA\" para contas de CONTAS DE RESULTADOS - CUSTOS",
-              "  E DESPESAS; \"RECEITA\" para contas de CONTAS DE RESULTADO - RECEITAS; \"APURACAO\" para CONTAS DE",
-              "  APURAÇÃO; \"COMPENSACAO\" para CONTAS DE COMPENSAÇÃO.",
+              "TEXTO DA PÁGINA:",
+              "```",
+              paginaTexto,
+              "```",
               "",
-              "2) Em `resumo`, extraia as linhas da tabela \"RESUMO DO BALANCETE\" ao final do documento (ATIVO,",
-              "PASSIVO, CONTAS DE RESULTADOS - CUSTOS E DESPESAS, CONTAS DE RESULTADO - RECEITAS, CONTAS DE",
-              "APURAÇÃO, CONTAS DE COMPENSAÇÃO, CONTAS DEVEDORAS, CONTAS CREDORAS, etc.), usando a coluna",
-              "\"Saldo Atual\" (valor + natureza D/C). Ignore linhas cujo Saldo Atual seja zero.",
+              "Em `contas`, extraia TODAS as linhas de conta (sintéticas e analíticas) desta página cujo Saldo",
+              "Atual seja diferente de zero. Ignore linhas com Saldo Atual \"0,00\". NÃO inclua a descrição da",
+              "conta — apenas:",
+              "- `classificacao`: o código hierárquico (ex: \"1.1.1.01.001\").",
+              "- `saldoAtual`: o valor numérico do Saldo Atual, sem o sufixo D/C (ponto decimal, sem separador de milhar).",
+              "- `natureza`: \"D\" ou \"C\", conforme o sufixo do Saldo Atual.",
+              "- `grupo`: a seção de topo do balancete a que a conta pertence. Se o cabeçalho da seção (ATIVO,",
+              "  PASSIVO, PATRIMÔNIO LÍQUIDO, CONTAS DE RESULTADOS - CUSTOS E DESPESAS, CONTAS DE RESULTADO -",
+              "  RECEITAS, CONTAS DE APURAÇÃO, CONTAS DE COMPENSAÇÃO) não aparecer nesta página (porque a seção",
+              "  começou em página anterior), infira pelo prefixo do próprio código de classificação: início",
+              "  \"1\" → ATIVO; início \"2.4\" → PL; demais início \"2\" → PASSIVO; início \"3\" → DESPESA; início",
+              "  \"4\" → RECEITA; início \"5\" → APURACAO; início \"6\" → COMPENSACAO.",
               "",
-              "Não invente contas ou valores que não estejam no documento.",
+              "Se esta página contiver a seção \"RESUMO DO BALANCETE\", extraia também em `resumo` cada linha",
+              "com Saldo Atual diferente de zero (descrição + valor + D/C). Caso contrário, deixe `resumo`",
+              "como lista vazia.",
+              "",
+              "Não invente contas ou valores que não estejam no texto desta página.",
             ].join("\n"),
           },
         ],
@@ -120,7 +150,7 @@ export async function parseBalanceteComIA(pdfBuffer: Buffer): Promise<BalanceteE
   const response = await stream.finalMessage()
 
   if (response.stop_reason === "max_tokens") {
-    throw new Error("O balancete é grande demais para ser analisado em uma única chamada")
+    throw new Error("A página é grande demais para ser analisada em uma única chamada")
   }
   if (response.stop_reason === "refusal") {
     throw new Error("A análise do PDF foi recusada")
@@ -129,5 +159,77 @@ export async function parseBalanceteComIA(pdfBuffer: Buffer): Promise<BalanceteE
   const textBlock = response.content.find((block) => block.type === "text")
   if (!textBlock || textBlock.type !== "text") return { contas: [], resumo: [] }
 
-  return JSON.parse(textBlock.text) as BalanceteExtraido
+  return JSON.parse(textBlock.text) as BalanceteIndice
+}
+
+const DESCRICOES_SCHEMA = {
+  type: "object",
+  properties: {
+    descricoes: {
+      type: "array",
+      items: {
+        type: "object",
+        properties: {
+          classificacao: { type: "string" },
+          descricao: { type: "string" },
+        },
+        required: ["classificacao", "descricao"],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ["descricoes"],
+  additionalProperties: false,
+} as const
+
+/**
+ * Segunda etapa (repetida em lotes pequenos): busca só a descrição de um conjunto limitado
+ * de contas, identificadas pela classificação já obtida na etapa de índice. Cada lote fica
+ * pequeno o bastante para responder bem dentro do limite de tempo de uma função serverless.
+ */
+export async function parseDescricoesComIA(pdfBuffer: Buffer, classificacoes: string[]): Promise<DescricaoConta[]> {
+  if (classificacoes.length === 0) return []
+
+  const stream = client.messages.stream({
+    model: "claude-opus-4-8",
+    max_tokens: 8000,
+    output_config: { format: { type: "json_schema", schema: DESCRICOES_SCHEMA } },
+    messages: [
+      {
+        role: "user",
+        content: [
+          documentoPdf(pdfBuffer),
+          {
+            type: "text",
+            text: [
+              CONTEXTO_BALANCETE,
+              "",
+              "Extraia APENAS a descrição da conta (coluna \"Descrição da conta\", exatamente como impressa,",
+              "preservando o prefixo \"(-)\" quando houver) para cada uma das seguintes contas, identificadas",
+              "pelo código da coluna \"Classificação\":",
+              "",
+              classificacoes.join(", "),
+              "",
+              "Ignore todas as demais contas do documento. Não invente descrições para códigos que não",
+              "existam no documento — nesse caso, simplesmente omita o item.",
+            ].join("\n"),
+          },
+        ],
+      },
+    ],
+  })
+  const response = await stream.finalMessage()
+
+  if (response.stop_reason === "max_tokens") {
+    throw new Error("Lote de contas grande demais para ser analisado em uma única chamada")
+  }
+  if (response.stop_reason === "refusal") {
+    throw new Error("A análise do PDF foi recusada")
+  }
+
+  const textBlock = response.content.find((block) => block.type === "text")
+  if (!textBlock || textBlock.type !== "text") return []
+
+  const parsed = JSON.parse(textBlock.text) as { descricoes: DescricaoConta[] }
+  return parsed.descricoes
 }

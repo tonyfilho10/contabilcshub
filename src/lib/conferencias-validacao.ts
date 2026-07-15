@@ -1,4 +1,4 @@
-import type { BalanceteExtraido, ContaBalancete, Natureza, ResumoLinha } from "@/lib/conferencias-ai-parser"
+import type { BalanceteExtraido, ContaBalancete, Natureza, ResumoLinha } from "@/lib/conferencias-types"
 
 export interface ErroNatureza {
   classificacao: string

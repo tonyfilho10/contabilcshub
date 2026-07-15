@@ -9,44 +9,39 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Upload, Loader2, CheckCircle2, XCircle, AlertTriangle, Scale } from "lucide-react"
 import { formatBRL } from "@/lib/format-currency"
 import { cn } from "@/lib/utils"
+import { validarBalancete } from "@/lib/conferencias-validacao"
+import type { ContaBalancete, ContaGrupo, Natureza, ResumoLinha } from "@/lib/conferencias-types"
+import type {
+  ErroNatureza,
+  GrupoDuplicidade,
+  FechamentoResumo,
+  ResultadoConferencia,
+} from "@/lib/conferencias-validacao"
 
-type Natureza = "D" | "C"
-
-interface ErroNatureza {
+interface ContaIndice {
   classificacao: string
-  descricao: string
-  naturezaEncontrada: Natureza
-  naturezaEsperada: Natureza
-  motivo: string
-}
-
-interface ContaResumida {
-  codigo: string
-  classificacao: string
-  descricao: string
   saldoAtual: number
   natureza: Natureza
+  grupo: ContaGrupo
 }
 
-interface GrupoDuplicidade {
-  descricaoNormalizada: string
-  contas: ContaResumida[]
-}
+// Contas por lote na busca de descrições — pequeno o bastante para cada chamada
+// responder bem dentro do limite de tempo de uma função serverless.
+const TAMANHO_LOTE = 25
 
-interface FechamentoResumo {
-  linhas: { descricao: string; saldoAtual: number; natureza: Natureza }[]
-  totalPositivo: number
-  totalNegativo: number
-  diferenca: number
-  balanceado: boolean
-}
-
-interface ResultadoConferencia {
-  totalContas: number
-  errosNatureza: ErroNatureza[]
-  duplicidades: GrupoDuplicidade[]
-  fechamentoAtivoPassivo: FechamentoResumo | null
-  fechamentoDebitoCredito: FechamentoResumo | null
+async function fetchJson<T>(url: string, body: FormData): Promise<T> {
+  const res = await fetch(url, { method: "POST", body })
+  const contentType = res.headers.get("content-type") ?? ""
+  if (!contentType.includes("application/json")) {
+    throw new Error(
+      res.status === 504 || res.status === 502
+        ? "O processamento excedeu o tempo limite do servidor. Tente novamente."
+        : `O servidor retornou uma resposta inesperada (HTTP ${res.status})`
+    )
+  }
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error ?? "Erro ao processar o balancete")
+  return data as T
 }
 
 function naturezaLabel(n: Natureza) {
@@ -70,24 +65,70 @@ export default function ConferenciasPage() {
 function BalanceteTab() {
   const inputRef = useRef<HTMLInputElement>(null)
   const [enviando, setEnviando] = useState(false)
+  const [progresso, setProgresso] = useState("")
   const [resultado, setResultado] = useState<ResultadoConferencia | null>(null)
   const [erro, setErro] = useState("")
 
   const handleArquivo = async (file: File) => {
     setEnviando(true)
     setErro("")
+    setResultado(null)
     try {
-      const formData = new FormData()
-      formData.append("arquivo", file)
-      const res = await fetch("/api/conferencias/importar", { method: "POST", body: formData })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error ?? "Erro ao processar o balancete")
-      setResultado(data)
+      // Índice: uma chamada por página do PDF, para que cada resposta fique pequena o
+      // bastante para não estourar o limite de tempo de uma função serverless.
+      const contasIndice: ContaIndice[] = []
+      const resumoAcumulado: ResumoLinha[] = []
+      let pagina = 1
+      let totalPaginas = 1
+      do {
+        setProgresso(`Extraindo contas do balancete — página ${pagina} de ${totalPaginas}…`)
+        const formPagina = new FormData()
+        formPagina.append("arquivo", file)
+        formPagina.append("pagina", String(pagina))
+        const resultadoPagina = await fetchJson<{
+          contas: ContaIndice[]
+          resumo: ResumoLinha[]
+          pagina: number
+          totalPaginas: number
+        }>("/api/conferencias/importar", formPagina)
+        contasIndice.push(...resultadoPagina.contas)
+        resumoAcumulado.push(...resultadoPagina.resumo)
+        totalPaginas = resultadoPagina.totalPaginas
+        pagina++
+      } while (pagina <= totalPaginas)
+
+      const indice = { contas: contasIndice, resumo: resumoAcumulado }
+
+      const lotes: string[][] = []
+      for (let i = 0; i < indice.contas.length; i += TAMANHO_LOTE) {
+        lotes.push(indice.contas.slice(i, i + TAMANHO_LOTE).map((c) => c.classificacao))
+      }
+
+      const descricaoPorClassificacao = new Map<string, string>()
+      for (let i = 0; i < lotes.length; i++) {
+        setProgresso(`Buscando descrições das contas — lote ${i + 1} de ${lotes.length}…`)
+        const formLote = new FormData()
+        formLote.append("arquivo", file)
+        formLote.append("classificacoes", JSON.stringify(lotes[i]))
+        const { descricoes } = await fetchJson<{ descricoes: { classificacao: string; descricao: string }[] }>(
+          "/api/conferencias/descricoes",
+          formLote
+        )
+        for (const d of descricoes) descricaoPorClassificacao.set(d.classificacao, d.descricao)
+      }
+
+      const contas: ContaBalancete[] = indice.contas.map((c) => ({
+        ...c,
+        descricao: descricaoPorClassificacao.get(c.classificacao) ?? "(descrição não encontrada)",
+      }))
+
+      setResultado(validarBalancete({ contas, resumo: indice.resumo }))
     } catch (err: unknown) {
       setErro((err as Error)?.message ?? "Erro ao processar o balancete")
       setResultado(null)
     } finally {
       setEnviando(false)
+      setProgresso("")
       if (inputRef.current) inputRef.current.value = ""
     }
   }
@@ -98,8 +139,9 @@ function BalanceteTab() {
         <div className="flex-1">
           <p className="text-sm font-medium">Balancete de verificação</p>
           <p className="text-xs text-muted-foreground">
-            Envie o balancete em PDF — o CSHUB confere a natureza de cada conta, o fechamento Ativo × Passivo
-            e possíveis contas em duplicidade.
+            {enviando && progresso
+              ? progresso
+              : "Envie o balancete em PDF — o CSHUB confere a natureza de cada conta, o fechamento Ativo × Passivo e possíveis contas em duplicidade."}
           </p>
         </div>
         <Button onClick={() => inputRef.current?.click()} disabled={enviando} className="shrink-0">
